@@ -1,0 +1,144 @@
+"use client";
+
+import { useState } from "react";
+import { Plus, Pencil, Trash2, PiggyBank } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
+import { Card, CardHeader, CardBody } from "@/components/shared/AppCard";
+import AppButton from "@/components/shared/AppButton";
+import AppInput from "@/components/shared/AppInput";
+import AppSelect from "@/components/shared/AppSelect";
+import Modal from "@/components/shared/Modal";
+import EmptyState from "@/components/shared/EmptyState";
+import LoadingScreen from "@/components/shared/LoadingScreen";
+import { Progress } from "@/components/ui/progress";
+import { formatCurrency } from "@/lib/format";
+import { apiError } from "@/lib/api";
+import { useBudgets, useCreateBudget, useUpdateBudget, useDeleteBudget } from "@/hooks/useBudgets";
+import { useCategories } from "@/hooks/useCategories";
+import type { Budget } from "@/types";
+
+const schema = z.object({
+  name: z.string().min(1, "Name is required"),
+  amount: z.coerce.number().positive("Amount must be positive"),
+  period: z.enum(["weekly", "monthly", "yearly"]),
+  category: z.string().optional(),
+  alertThreshold: z.coerce.number().min(0).max(100).optional(),
+});
+
+type FormValues = z.infer<typeof schema>;
+
+export default function BudgetsPage() {
+  const budgets = useBudgets();
+  const cats = useCategories("expense");
+  const createBudget = useCreateBudget();
+  const updateBudget = useUpdateBudget();
+  const deleteBudget = useDeleteBudget();
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<Budget | null>(null);
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({ resolver: zodResolver(schema) });
+
+  const openAdd = () => {
+    setEditing(null);
+    reset({ name: "", amount: 0, period: "monthly", category: "", alertThreshold: 80 });
+    setModalOpen(true);
+  };
+
+  const openEdit = (b: Budget) => {
+    setEditing(b);
+    reset({ name: b.name, amount: b.amount, period: b.period, category: b.category?._id || "", alertThreshold: b.alertThreshold ?? 80 });
+    setModalOpen(true);
+  };
+
+  const onSubmit = async (values: FormValues) => {
+    try {
+      if (editing) {
+        await updateBudget.mutateAsync({ id: editing._id, ...values });
+        toast.success("Budget updated");
+      } else {
+        await createBudget.mutateAsync(values);
+        toast.success("Budget created");
+      }
+      setModalOpen(false);
+    } catch (err) { toast.error(apiError(err)); }
+  };
+
+  const onDelete = async (id: string) => {
+    try { await deleteBudget.mutateAsync(id); toast.success("Budget deleted"); }
+    catch (err) { toast.error(apiError(err)); }
+  };
+
+  if (budgets.isLoading) return <LoadingScreen />;
+  const data = budgets.data || [];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground">Budgets</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Set spending limits by category.</p>
+        </div>
+        <AppButton onClick={openAdd}><Plus className="h-4 w-4" /> Add budget</AppButton>
+      </div>
+
+      {data.length === 0 ? (
+        <EmptyState icon={PiggyBank} title="No budgets yet" description="Create a budget to track your spending limits." action={<AppButton onClick={openAdd} size="sm"><Plus className="h-4 w-4" /> Add</AppButton>} />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {data.map((b) => {
+            const pct = Math.min(b.progress ?? 0, 100);
+            return (
+              <Card key={b._id}>
+                <CardHeader
+                  title={b.name}
+                  subtitle={`${b.period} · ${b.category?.name || "All"}`}
+                  action={
+                    <div className="flex gap-1">
+                      <AppButton size="icon" variant="ghost" onClick={() => openEdit(b)}><Pencil className="h-3.5 w-3.5" /></AppButton>
+                      <AppButton size="icon" variant="ghost" onClick={() => onDelete(b._id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></AppButton>
+                    </div>
+                  }
+                />
+                <CardBody>
+                  <div className="flex items-end justify-between">
+                    <span className="text-lg font-semibold text-foreground">{formatCurrency(b.spent ?? 0)}</span>
+                    <span className="text-xs text-muted-foreground">of {formatCurrency(b.amount)}</span>
+                  </div>
+                  <Progress value={pct} className="mt-2 h-2" />
+                  <p className={`mt-1 text-xs ${pct >= 100 ? "text-destructive" : pct >= (b.alertThreshold ?? 80) ? "text-warning" : "text-muted-foreground"}`}>
+                    {pct.toFixed(0)}% used · {formatCurrency(b.remaining ?? 0)} remaining
+                  </p>
+                </CardBody>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? "Edit Budget" : "New Budget"}>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <AppInput label="Name" error={errors.name?.message} {...register("name")} />
+          <AppInput label="Amount" type="number" step="0.01" error={errors.amount?.message} {...register("amount")} />
+          <AppSelect label="Period" error={errors.period?.message} {...register("period")}>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+          </AppSelect>
+          <AppSelect label="Category" {...register("category")}>
+            <option value="">All categories</option>
+            {(cats.data || []).map((c) => (<option key={c._id} value={c._id}>{c.name}</option>))}
+          </AppSelect>
+          <AppInput label="Alert threshold (%)" type="number" min={0} max={100} {...register("alertThreshold")} />
+          <div className="flex justify-end gap-2">
+            <AppButton variant="secondary" onClick={() => setModalOpen(false)}>Cancel</AppButton>
+            <AppButton type="submit" loading={createBudget.isPending || updateBudget.isPending}>{editing ? "Update" : "Create"}</AppButton>
+          </div>
+        </form>
+      </Modal>
+    </div>
+  );
+}

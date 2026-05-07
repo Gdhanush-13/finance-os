@@ -1,0 +1,146 @@
+"use client";
+
+import { useState } from "react";
+import { Plus, Pencil, Trash2, Wallet } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
+import { Card, CardHeader, CardBody } from "@/components/shared/AppCard";
+import AppButton from "@/components/shared/AppButton";
+import AppInput from "@/components/shared/AppInput";
+import AppSelect from "@/components/shared/AppSelect";
+import Modal from "@/components/shared/Modal";
+import EmptyState from "@/components/shared/EmptyState";
+import LoadingScreen from "@/components/shared/LoadingScreen";
+import { formatCurrency } from "@/lib/format";
+import { apiError } from "@/lib/api";
+import { useAccounts, useCreateAccount, useUpdateAccount, useDeleteAccount } from "@/hooks/useAccounts";
+import type { Account } from "@/types";
+
+const schema = z.object({
+  name: z.string().min(1, "Name is required"),
+  type: z.string().min(1, "Type is required"),
+  balance: z.coerce.number(),
+  currency: z.string().min(3).max(3).default("USD"),
+  institution: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+type FormValues = z.infer<typeof schema>;
+
+export default function AccountsPage() {
+  const accounts = useAccounts();
+  const createAcct = useCreateAccount();
+  const updateAcct = useUpdateAccount();
+  const deleteAcct = useDeleteAccount();
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<Account | null>(null);
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+  });
+
+  const openAdd = () => {
+    setEditing(null);
+    reset({ name: "", type: "checking", balance: 0, currency: "USD", institution: "", notes: "" });
+    setModalOpen(true);
+  };
+
+  const openEdit = (acct: Account) => {
+    setEditing(acct);
+    reset({
+      name: acct.name,
+      type: acct.type,
+      balance: acct.balance ?? acct.currentBalance ?? 0,
+      currency: acct.currency || "USD",
+      institution: acct.institution || "",
+      notes: acct.notes || "",
+    });
+    setModalOpen(true);
+  };
+
+  const onSubmit = async (values: FormValues) => {
+    try {
+      if (editing) {
+        await updateAcct.mutateAsync({ id: editing._id, ...values });
+        toast.success("Account updated");
+      } else {
+        await createAcct.mutateAsync(values);
+        toast.success("Account created");
+      }
+      setModalOpen(false);
+    } catch (err) { toast.error(apiError(err)); }
+  };
+
+  const onDelete = async (id: string) => {
+    try {
+      await deleteAcct.mutateAsync(id);
+      toast.success("Account deleted");
+    } catch (err) { toast.error(apiError(err)); }
+  };
+
+  if (accounts.isLoading) return <LoadingScreen />;
+
+  const data = accounts.data || [];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground">Accounts</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Manage your bank accounts and wallets.</p>
+        </div>
+        <AppButton onClick={openAdd}><Plus className="h-4 w-4" /> Add account</AppButton>
+      </div>
+
+      {data.length === 0 ? (
+        <EmptyState icon={Wallet} title="No accounts yet" description="Create your first account to start tracking." action={<AppButton onClick={openAdd} size="sm"><Plus className="h-4 w-4" /> Add</AppButton>} />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {data.map((acct) => (
+            <Card key={acct._id}>
+              <CardHeader
+                title={acct.name}
+                subtitle={acct.type}
+                action={
+                  <div className="flex gap-1">
+                    <AppButton size="icon" variant="ghost" onClick={() => openEdit(acct)}><Pencil className="h-3.5 w-3.5" /></AppButton>
+                    <AppButton size="icon" variant="ghost" onClick={() => onDelete(acct._id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></AppButton>
+                  </div>
+                }
+              />
+              <CardBody>
+                <p className="text-2xl font-semibold tracking-tight text-foreground">{formatCurrency(acct.balance ?? acct.currentBalance ?? 0, acct.currency)}</p>
+                {acct.institution && <p className="mt-1 text-xs text-muted-foreground">{acct.institution}</p>}
+              </CardBody>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? "Edit Account" : "New Account"}>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <AppInput label="Name" error={errors.name?.message} {...register("name")} />
+          <AppSelect label="Type" error={errors.type?.message} {...register("type")}>
+            <option value="checking">Checking</option>
+            <option value="savings">Savings</option>
+            <option value="credit">Credit Card</option>
+            <option value="investment">Investment</option>
+            <option value="cash">Cash</option>
+            <option value="other">Other</option>
+          </AppSelect>
+          <AppInput label="Balance" type="number" step="0.01" error={errors.balance?.message} {...register("balance")} />
+          <AppInput label="Currency" maxLength={3} error={errors.currency?.message} {...register("currency")} />
+          <AppInput label="Institution" {...register("institution")} />
+          <AppInput label="Notes" {...register("notes")} />
+          <div className="flex justify-end gap-2">
+            <AppButton variant="secondary" onClick={() => setModalOpen(false)}>Cancel</AppButton>
+            <AppButton type="submit" loading={createAcct.isPending || updateAcct.isPending}>{editing ? "Update" : "Create"}</AppButton>
+          </div>
+        </form>
+      </Modal>
+    </div>
+  );
+}

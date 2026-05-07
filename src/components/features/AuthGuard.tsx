@@ -1,0 +1,36 @@
+"use client";
+
+import { useEffect, type ReactNode } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { useAuth } from "@/auth/AuthContext";
+import LoadingScreen from "@/components/shared/LoadingScreen";
+
+export function ProtectedRoute({ children }: { children: ReactNode }) {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/login");
+    }
+  }, [loading, user, router]);
+
+  if (loading) return <LoadingScreen />;
+  if (!user) return null;
+  return <>{children}</>;
+}
+
+export function PublicOnlyRoute({ children }: { children: ReactNode }) {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace("/");
+    }
+  }, [loading, user, router]);
+
+  if (loading) return <LoadingScreen />;
+  if (user) return null;
+  return <>{children}</>;
+}

@@ -7,6 +7,12 @@ const logger = require("./src/utils/logger");
 async function start() {
   try {
     await connectDB();
+    logger.info("MongoDB connected successfully");
+  } catch (err) {
+    logger.warn("MongoDB connection failed – server will start without DB", err.message);
+  }
+
+  try {
     const app = buildApp();
     const server = app.listen(env.PORT, () => {
       logger.info(
