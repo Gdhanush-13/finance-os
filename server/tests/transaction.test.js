@@ -30,7 +30,8 @@ describe("Transaction API", () => {
       user: userId,
       name: "Main",
       type: "bank",
-      balance: 1000,
+      openingBalance: 1000,
+      currentBalance: 1000,
     });
     accountId = account._id;
 

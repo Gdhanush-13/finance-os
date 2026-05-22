@@ -21,10 +21,9 @@ import type { Account } from "@/types";
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
   type: z.string().min(1, "Type is required"),
-  balance: z.coerce.number(),
+  openingBalance: z.coerce.number(),
   currency: z.string().min(3).max(3).default("USD"),
   institution: z.string().optional(),
-  notes: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -44,7 +43,7 @@ export default function AccountsPage() {
 
   const openAdd = () => {
     setEditing(null);
-    reset({ name: "", type: "checking", balance: 0, currency: "USD", institution: "", notes: "" });
+    reset({ name: "", type: "bank", openingBalance: 0, currency: "USD", institution: "" });
     setModalOpen(true);
   };
 
@@ -53,10 +52,9 @@ export default function AccountsPage() {
     reset({
       name: acct.name,
       type: acct.type,
-      balance: acct.balance ?? acct.currentBalance ?? 0,
+      openingBalance: acct.openingBalance ?? 0,
       currency: acct.currency || "USD",
       institution: acct.institution || "",
-      notes: acct.notes || "",
     });
     setModalOpen(true);
   };
@@ -112,7 +110,7 @@ export default function AccountsPage() {
                 }
               />
               <CardBody>
-                <p className="text-2xl font-semibold tracking-tight text-foreground">{formatCurrency(acct.balance ?? acct.currentBalance ?? 0, acct.currency)}</p>
+                <p className="text-2xl font-semibold tracking-tight text-foreground">{formatCurrency(acct.currentBalance ?? 0, acct.currency)}</p>
                 {acct.institution && <p className="mt-1 text-xs text-muted-foreground">{acct.institution}</p>}
               </CardBody>
             </Card>
@@ -124,17 +122,17 @@ export default function AccountsPage() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <AppInput label="Name" error={errors.name?.message} {...register("name")} />
           <AppSelect label="Type" error={errors.type?.message} {...register("type")}>
-            <option value="checking">Checking</option>
-            <option value="savings">Savings</option>
-            <option value="credit">Credit Card</option>
-            <option value="investment">Investment</option>
+            <option value="bank">Bank</option>
             <option value="cash">Cash</option>
+            <option value="credit_card">Credit Card</option>
+            <option value="investment">Investment</option>
+            <option value="loan">Loan</option>
+            <option value="wallet">Wallet</option>
             <option value="other">Other</option>
           </AppSelect>
-          <AppInput label="Balance" type="number" step="0.01" error={errors.balance?.message} {...register("balance")} />
+          <AppInput label="Opening Balance" type="number" step="0.01" error={errors.openingBalance?.message} {...register("openingBalance")} />
           <AppInput label="Currency" maxLength={3} error={errors.currency?.message} {...register("currency")} />
           <AppInput label="Institution" {...register("institution")} />
-          <AppInput label="Notes" {...register("notes")} />
           <div className="flex justify-end gap-2">
             <AppButton variant="secondary" onClick={() => setModalOpen(false)}>Cancel</AppButton>
             <AppButton type="submit" loading={createAcct.isPending || updateAcct.isPending}>{editing ? "Update" : "Create"}</AppButton>

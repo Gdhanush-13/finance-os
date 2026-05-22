@@ -13,15 +13,14 @@ export interface Account {
   _id: string;
   name: string;
   type: string;
-  balance: number;
   currency: string;
+  openingBalance: number;
+  currentBalance: number;
   color?: string;
-  notes?: string;
-  archived?: boolean;
-  createdAt?: string;
-  currentBalance?: number;
-  openingBalance?: number;
+  icon?: string;
   institution?: string;
+  isArchived?: boolean;
+  createdAt?: string;
 }
 
 export interface Category {
