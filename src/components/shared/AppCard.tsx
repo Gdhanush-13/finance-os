@@ -37,7 +37,7 @@ export function CardHeader({ title, subtitle, action, className }: CardHeaderPro
   return (
     <ShadcnCardHeader
       className={cn(
-        "flex flex-row items-start justify-between gap-3 space-y-0 border-b border-border/60 px-5 py-4",
+        "flex flex-row flex-wrap items-start justify-between gap-3 space-y-0 border-b border-border/60 px-5 py-4",
         className
       )}
     >

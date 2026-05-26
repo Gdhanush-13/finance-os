@@ -135,30 +135,28 @@ export default function TransactionsPage() {
         <CardHeader
           title="All Transactions"
           subtitle={meta ? `${meta.total} total` : undefined}
-          action={
-            <div className="flex gap-2">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-                <input
-                  placeholder="Search..."
-                  value={search}
-                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                  className="h-9 w-44 rounded-md border border-input bg-card pl-8 pr-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                />
-              </div>
-              <select
-                value={typeFilter}
-                onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
-                className="h-9 rounded-md border border-input bg-card px-2 text-sm"
-              >
-                <option value="">All types</option>
-                <option value="income">Income</option>
-                <option value="expense">Expense</option>
-                <option value="transfer">Transfer</option>
-              </select>
-            </div>
-          }
         />
+        <div className="flex flex-wrap gap-2 border-b border-border/60 px-5 pb-4">
+          <div className="relative flex-1 min-w-[140px]">
+            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+            <input
+              placeholder="Search..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              className="h-9 w-full rounded-md border border-input bg-card pl-8 pr-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+          </div>
+          <select
+            value={typeFilter}
+            onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
+            className="h-9 rounded-md border border-input bg-card px-2 text-sm"
+          >
+            <option value="">All types</option>
+            <option value="income">Income</option>
+            <option value="expense">Expense</option>
+            <option value="transfer">Transfer</option>
+          </select>
+        </div>
         <CardBody>
           {data.length === 0 ? (
             <EmptyState title="No transactions yet" description="Add your first transaction to get started." action={<AppButton onClick={openAdd} size="sm"><Plus className="h-4 w-4" /> Add</AppButton>} />
@@ -166,17 +164,17 @@ export default function TransactionsPage() {
             <>
               <div className="divide-y divide-border">
                 {data.map((tx) => (
-                  <div key={tx._id} className="flex items-center justify-between py-3">
-                    <div className="flex items-center gap-3">
+                  <div key={tx._id} className="flex items-center justify-between gap-2 py-3">
+                    <div className="flex min-w-0 items-center gap-3">
                       <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold ${tx.type === "income" ? "bg-income-soft text-income" : tx.type === "expense" ? "bg-expense-soft text-expense" : "bg-muted text-transfer"}`}>
                         {tx.type === "income" ? "+" : tx.type === "expense" ? "−" : "⇄"}
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{tx.description || tx.category?.name || tx.type}</p>
-                        <p className="text-xs text-muted-foreground">{tx.account?.name} · {formatDate(tx.date)}</p>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-foreground">{tx.description || tx.category?.name || tx.type}</p>
+                        <p className="truncate text-xs text-muted-foreground">{tx.account?.name} · {formatDate(tx.date)}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex shrink-0 items-center gap-1 sm:gap-3">
                       <div className="text-right">
                         <p className={`text-sm font-semibold ${tx.type === "income" ? "text-income" : tx.type === "expense" ? "text-expense" : "text-foreground"}`}>
                           {tx.type === "income" ? "+" : tx.type === "expense" ? "−" : ""}{formatCurrency(tx.amount)}

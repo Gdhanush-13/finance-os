@@ -142,11 +142,10 @@ export default function DashboardPage() {
                     nameKey="name"
                     cx="50%"
                     cy="50%"
-                    outerRadius={80}
-                    innerRadius={50}
+                    outerRadius={70}
+                    innerRadius={45}
                     paddingAngle={2}
-                    label={({ name }) => name}
-                    labelLine={false}
+                    label={false}
                   >
                     {(categories.data || []).map((_, i) => (
                       <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
@@ -175,10 +174,10 @@ export default function DashboardPage() {
           ) : (
             <div className="divide-y divide-border">
               {(recent.data || []).map((tx) => (
-                <div key={tx._id} className="flex items-center justify-between py-3">
-                  <div className="flex items-center gap-3">
+                <div key={tx._id} className="flex items-center justify-between gap-2 py-3">
+                  <div className="flex min-w-0 items-center gap-3">
                     <div
-                      className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-semibold ${
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold ${
                         tx.type === "income"
                           ? "bg-income-soft text-income"
                           : tx.type === "expense"
@@ -188,16 +187,16 @@ export default function DashboardPage() {
                     >
                       {tx.type === "income" ? "+" : tx.type === "expense" ? "−" : "⇄"}
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-foreground">
                         {tx.description || tx.category?.name || tx.type}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="truncate text-xs text-muted-foreground">
                         {tx.account?.name} · {formatDate(tx.date)}
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="shrink-0 text-right">
                     <p
                       className={`text-sm font-semibold ${
                         tx.type === "income" ? "text-income" : tx.type === "expense" ? "text-expense" : "text-foreground"
