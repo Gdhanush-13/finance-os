@@ -3,7 +3,10 @@ import "./globals.css";
 import Providers from "@/components/providers/Providers";
 
 export const metadata: Metadata = {
-  title: "Finance OS",
+  title: {
+    default: "Finance OS",
+    template: "%s | Finance OS",
+  },
   description:
     "Track accounts, plan budgets, hit savings goals, and visualize your cashflow — all in one calm dashboard.",
 };

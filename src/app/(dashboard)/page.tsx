@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { Card, CardHeader, CardBody } from "@/components/shared/AppCard";
 import LoadingScreen from "@/components/shared/LoadingScreen";
+import ErrorState from "@/components/shared/ErrorState";
 import { formatCurrency, formatDate } from "@/lib/format";
 import {
   useSummary,
@@ -23,6 +24,7 @@ import {
   useRecentTransactions,
 } from "@/hooks/useAnalytics";
 import { Badge } from "@/components/ui/badge";
+import { apiError } from "@/lib/api";
 
 const PIE_COLORS = [
   "hsl(234,73%,56%)",
@@ -40,6 +42,7 @@ export default function DashboardPage() {
   const recent = useRecentTransactions(8);
 
   if (summary.isLoading) return <LoadingScreen />;
+  if (summary.isError) return <ErrorState message={apiError(summary.error)} onRetry={() => summary.refetch()} />;
 
   const s = summary.data;
 

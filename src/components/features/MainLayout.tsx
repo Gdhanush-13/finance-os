@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -16,6 +16,8 @@ import {
   Menu,
   X,
   User,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { useAuth } from "@/auth/AuthContext";
 import { cn } from "@/lib/utils";
@@ -49,6 +51,22 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [openMobile, setOpenMobile] = useState(false);
+  const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("finance-os.theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const isDark = saved === "dark" || (!saved && prefersDark);
+    setDark(isDark);
+    document.documentElement.classList.toggle("dark", isDark);
+  }, []);
+
+  const toggleTheme = () => {
+    const next = !dark;
+    setDark(next);
+    document.documentElement.classList.toggle("dark", next);
+    localStorage.setItem("finance-os.theme", next ? "dark" : "light");
+  };
 
   const onLogout = () => {
     logout();
@@ -172,13 +190,23 @@ export default function MainLayout({ children }: { children: ReactNode }) {
               </h1>
             </div>
           </div>
-          <div className="hidden text-xs text-muted-foreground sm:block">
-            {new Date().toLocaleDateString(undefined, {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
+          <div className="flex items-center gap-3">
+            <span className="hidden text-xs text-muted-foreground sm:block">
+              {new Date().toLocaleDateString(undefined, {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </span>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="rounded-md p-2 text-muted-foreground hover:bg-muted transition-colors"
+              aria-label="Toggle theme"
+            >
+              {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
           </div>
         </header>
 

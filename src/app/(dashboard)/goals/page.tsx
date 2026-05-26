@@ -10,7 +10,9 @@ import { Card, CardHeader, CardBody } from "@/components/shared/AppCard";
 import AppButton from "@/components/shared/AppButton";
 import AppInput from "@/components/shared/AppInput";
 import Modal from "@/components/shared/Modal";
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import EmptyState from "@/components/shared/EmptyState";
+import ErrorState from "@/components/shared/ErrorState";
 import LoadingScreen from "@/components/shared/LoadingScreen";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +40,7 @@ export default function GoalsPage() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Goal | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [contribModal, setContribModal] = useState<string | null>(null);
   const [contribAmt, setContribAmt] = useState("");
 
@@ -60,12 +63,14 @@ export default function GoalsPage() {
     catch (err) { toast.error(apiError(err)); }
   };
 
-  const onDelete = async (id: string) => {
-    try { await deleteGoal.mutateAsync(id); toast.success("Goal deleted"); }
+  const onDelete = async () => {
+    if (!deleteId) return;
+    try { await deleteGoal.mutateAsync(deleteId); toast.success("Goal deleted"); setDeleteId(null); }
     catch (err) { toast.error(apiError(err)); }
   };
 
   if (goals.isLoading) return <LoadingScreen />;
+  if (goals.isError) return <ErrorState message={apiError(goals.error)} onRetry={() => goals.refetch()} />;
   const data = goals.data || [];
 
   return (
@@ -93,7 +98,7 @@ export default function GoalsPage() {
                     <div className="flex gap-1">
                       {g.isAchieved && <Badge className="bg-success text-success-foreground text-[10px]">Achieved</Badge>}
                       <AppButton size="icon" variant="ghost" onClick={() => openEdit(g)}><Pencil className="h-3.5 w-3.5" /></AppButton>
-                      <AppButton size="icon" variant="ghost" onClick={() => onDelete(g._id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></AppButton>
+                      <AppButton size="icon" variant="ghost" onClick={() => setDeleteId(g._id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></AppButton>
                     </div>
                   }
                 />
@@ -113,6 +118,15 @@ export default function GoalsPage() {
           })}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={onDelete}
+        title="Delete goal?"
+        description="This will permanently remove this savings goal."
+        loading={deleteGoal.isPending}
+      />
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? "Edit Goal" : "New Goal"}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

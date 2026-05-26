@@ -11,7 +11,9 @@ import AppButton from "@/components/shared/AppButton";
 import AppInput from "@/components/shared/AppInput";
 import AppSelect from "@/components/shared/AppSelect";
 import Modal from "@/components/shared/Modal";
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import EmptyState from "@/components/shared/EmptyState";
+import ErrorState from "@/components/shared/ErrorState";
 import LoadingScreen from "@/components/shared/LoadingScreen";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/format";
@@ -55,6 +57,7 @@ export default function TransactionsPage() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Transaction | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const {
     register,
@@ -101,16 +104,19 @@ export default function TransactionsPage() {
     }
   };
 
-  const onDelete = async (id: string) => {
+  const onDelete = async () => {
+    if (!deleteId) return;
     try {
-      await deleteTx.mutateAsync(id);
+      await deleteTx.mutateAsync(deleteId);
       toast.success("Transaction deleted");
+      setDeleteId(null);
     } catch (err) {
       toast.error(apiError(err));
     }
   };
 
   if (txns.isLoading) return <LoadingScreen />;
+  if (txns.isError) return <ErrorState message={apiError(txns.error)} onRetry={() => txns.refetch()} />;
 
   const data = txns.data?.data || [];
   const meta = txns.data?.meta;
@@ -178,7 +184,7 @@ export default function TransactionsPage() {
                         <Badge variant="secondary" className="text-[10px]">{tx.type}</Badge>
                       </div>
                       <AppButton size="icon" variant="ghost" onClick={() => openEdit(tx)}><Pencil className="h-3.5 w-3.5" /></AppButton>
-                      <AppButton size="icon" variant="ghost" onClick={() => onDelete(tx._id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></AppButton>
+                      <AppButton size="icon" variant="ghost" onClick={() => setDeleteId(tx._id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></AppButton>
                     </div>
                   </div>
                 ))}
@@ -194,6 +200,15 @@ export default function TransactionsPage() {
           )}
         </CardBody>
       </Card>
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={onDelete}
+        title="Delete transaction?"
+        description="This will permanently remove this transaction and update your account balance."
+        loading={deleteTx.isPending}
+      />
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? "Edit Transaction" : "New Transaction"}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

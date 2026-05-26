@@ -11,7 +11,9 @@ import AppButton from "@/components/shared/AppButton";
 import AppInput from "@/components/shared/AppInput";
 import AppSelect from "@/components/shared/AppSelect";
 import Modal from "@/components/shared/Modal";
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import EmptyState from "@/components/shared/EmptyState";
+import ErrorState from "@/components/shared/ErrorState";
 import LoadingScreen from "@/components/shared/LoadingScreen";
 import { Badge } from "@/components/ui/badge";
 import { apiError } from "@/lib/api";
@@ -32,6 +34,7 @@ export default function CategoriesPage() {
   const deleteCat = useDeleteCategory();
   const [tab, setTab] = useState<"expense" | "income">("expense");
   const [modalOpen, setModalOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
@@ -42,12 +45,14 @@ export default function CategoriesPage() {
     catch (err) { toast.error(apiError(err)); }
   };
 
-  const onDelete = async (id: string) => {
-    try { await deleteCat.mutateAsync(id); toast.success("Category deleted"); }
+  const onDelete = async () => {
+    if (!deleteId) return;
+    try { await deleteCat.mutateAsync(deleteId); toast.success("Category deleted"); setDeleteId(null); }
     catch (err) { toast.error(apiError(err)); }
   };
 
   if (cats.isLoading) return <LoadingScreen />;
+  if (cats.isError) return <ErrorState message={apiError(cats.error)} onRetry={() => cats.refetch()} />;
 
   const filtered = (cats.data || []).filter((c) => c.kind === tab);
 
@@ -79,13 +84,22 @@ export default function CategoriesPage() {
                     <span className="text-sm font-medium text-foreground">{c.name}</span>
                     <Badge variant="secondary" className="text-[10px]">{c.kind}</Badge>
                   </div>
-                  <AppButton size="icon" variant="ghost" onClick={() => onDelete(c._id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></AppButton>
+                  <AppButton size="icon" variant="ghost" onClick={() => setDeleteId(c._id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></AppButton>
                 </div>
               ))}
             </div>
           </CardBody>
         </Card>
       )}
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={onDelete}
+        title="Delete category?"
+        description="Transactions using this category will become uncategorized."
+        loading={deleteCat.isPending}
+      />
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="New Category">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

@@ -4,10 +4,12 @@ const mongoose = require("mongoose");
 let mongoServer;
 
 beforeAll(async () => {
-  mongoServer = await MongoMemoryServer.create();
+  mongoServer = await MongoMemoryServer.create({
+    instance: { launchTimeout: 30_000 },
+  });
   const mongoUri = mongoServer.getUri();
   await mongoose.connect(mongoUri);
-}, 30_000);
+}, 60_000);
 
 afterAll(async () => {
   await mongoose.disconnect();
@@ -22,4 +24,4 @@ afterEach(async () => {
     const collection = collections[key];
     await collection.deleteMany({});
   }
-});
+}, 15_000);

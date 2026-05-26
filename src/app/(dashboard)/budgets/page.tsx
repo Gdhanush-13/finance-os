@@ -11,7 +11,9 @@ import AppButton from "@/components/shared/AppButton";
 import AppInput from "@/components/shared/AppInput";
 import AppSelect from "@/components/shared/AppSelect";
 import Modal from "@/components/shared/Modal";
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import EmptyState from "@/components/shared/EmptyState";
+import ErrorState from "@/components/shared/ErrorState";
 import LoadingScreen from "@/components/shared/LoadingScreen";
 import { Progress } from "@/components/ui/progress";
 import { formatCurrency } from "@/lib/format";
@@ -39,6 +41,7 @@ export default function BudgetsPage() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Budget | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
@@ -67,12 +70,14 @@ export default function BudgetsPage() {
     } catch (err) { toast.error(apiError(err)); }
   };
 
-  const onDelete = async (id: string) => {
-    try { await deleteBudget.mutateAsync(id); toast.success("Budget deleted"); }
+  const onDelete = async () => {
+    if (!deleteId) return;
+    try { await deleteBudget.mutateAsync(deleteId); toast.success("Budget deleted"); setDeleteId(null); }
     catch (err) { toast.error(apiError(err)); }
   };
 
   if (budgets.isLoading) return <LoadingScreen />;
+  if (budgets.isError) return <ErrorState message={apiError(budgets.error)} onRetry={() => budgets.refetch()} />;
   const data = budgets.data || [];
 
   return (
@@ -99,7 +104,7 @@ export default function BudgetsPage() {
                   action={
                     <div className="flex gap-1">
                       <AppButton size="icon" variant="ghost" onClick={() => openEdit(b)}><Pencil className="h-3.5 w-3.5" /></AppButton>
-                      <AppButton size="icon" variant="ghost" onClick={() => onDelete(b._id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></AppButton>
+                      <AppButton size="icon" variant="ghost" onClick={() => setDeleteId(b._id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></AppButton>
                     </div>
                   }
                 />
@@ -118,6 +123,15 @@ export default function BudgetsPage() {
           })}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={onDelete}
+        title="Delete budget?"
+        description="This will permanently remove this budget."
+        loading={deleteBudget.isPending}
+      />
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? "Edit Budget" : "New Budget"}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

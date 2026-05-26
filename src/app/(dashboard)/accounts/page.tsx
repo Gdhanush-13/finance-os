@@ -11,7 +11,9 @@ import AppButton from "@/components/shared/AppButton";
 import AppInput from "@/components/shared/AppInput";
 import AppSelect from "@/components/shared/AppSelect";
 import Modal from "@/components/shared/Modal";
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import EmptyState from "@/components/shared/EmptyState";
+import ErrorState from "@/components/shared/ErrorState";
 import LoadingScreen from "@/components/shared/LoadingScreen";
 import { formatCurrency } from "@/lib/format";
 import { apiError } from "@/lib/api";
@@ -36,6 +38,7 @@ export default function AccountsPage() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Account | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -72,14 +75,17 @@ export default function AccountsPage() {
     } catch (err) { toast.error(apiError(err)); }
   };
 
-  const onDelete = async (id: string) => {
+  const onDelete = async () => {
+    if (!deleteId) return;
     try {
-      await deleteAcct.mutateAsync(id);
+      await deleteAcct.mutateAsync(deleteId);
       toast.success("Account deleted");
+      setDeleteId(null);
     } catch (err) { toast.error(apiError(err)); }
   };
 
   if (accounts.isLoading) return <LoadingScreen />;
+  if (accounts.isError) return <ErrorState message={apiError(accounts.error)} onRetry={() => accounts.refetch()} />;
 
   const data = accounts.data || [];
 
@@ -105,7 +111,7 @@ export default function AccountsPage() {
                 action={
                   <div className="flex gap-1">
                     <AppButton size="icon" variant="ghost" onClick={() => openEdit(acct)}><Pencil className="h-3.5 w-3.5" /></AppButton>
-                    <AppButton size="icon" variant="ghost" onClick={() => onDelete(acct._id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></AppButton>
+                    <AppButton size="icon" variant="ghost" onClick={() => setDeleteId(acct._id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></AppButton>
                   </div>
                 }
               />
@@ -117,6 +123,15 @@ export default function AccountsPage() {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={onDelete}
+        title="Delete account?"
+        description="This will permanently remove this account and all associated transactions."
+        loading={deleteAcct.isPending}
+      />
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? "Edit Account" : "New Account"}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

@@ -11,7 +11,9 @@ import AppButton from "@/components/shared/AppButton";
 import AppInput from "@/components/shared/AppInput";
 import AppSelect from "@/components/shared/AppSelect";
 import Modal from "@/components/shared/Modal";
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import EmptyState from "@/components/shared/EmptyState";
+import ErrorState from "@/components/shared/ErrorState";
 import LoadingScreen from "@/components/shared/LoadingScreen";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/format";
@@ -48,6 +50,7 @@ export default function RecurringPage() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<RecurringRule | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<FormValues>({ resolver: zodResolver(schema) });
   const watchType = watch("type");
@@ -72,8 +75,9 @@ export default function RecurringPage() {
     } catch (err) { toast.error(apiError(err)); }
   };
 
-  const onDelete = async (id: string) => {
-    try { await deleteRule.mutateAsync(id); toast.success("Rule deleted"); }
+  const onDelete = async () => {
+    if (!deleteId) return;
+    try { await deleteRule.mutateAsync(deleteId); toast.success("Rule deleted"); setDeleteId(null); }
     catch (err) { toast.error(apiError(err)); }
   };
 
@@ -85,6 +89,7 @@ export default function RecurringPage() {
   };
 
   if (rules.isLoading) return <LoadingScreen />;
+  if (rules.isError) return <ErrorState message={apiError(rules.error)} onRetry={() => rules.refetch()} />;
   const data = rules.data || [];
 
   return (
@@ -113,7 +118,7 @@ export default function RecurringPage() {
                   <div className="flex gap-1">
                     <Badge variant={r.active ? "default" : "secondary"} className="text-[10px]">{r.active ? "Active" : "Paused"}</Badge>
                     <AppButton size="icon" variant="ghost" onClick={() => openEdit(r)}><Pencil className="h-3.5 w-3.5" /></AppButton>
-                    <AppButton size="icon" variant="ghost" onClick={() => onDelete(r._id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></AppButton>
+                    <AppButton size="icon" variant="ghost" onClick={() => setDeleteId(r._id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></AppButton>
                   </div>
                 }
               />
@@ -130,6 +135,15 @@ export default function RecurringPage() {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        onConfirm={onDelete}
+        title="Delete recurring rule?"
+        description="This will permanently remove this recurring rule. Future transactions will no longer be created."
+        loading={deleteRule.isPending}
+      />
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? "Edit Rule" : "New Recurring Rule"} size="lg">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

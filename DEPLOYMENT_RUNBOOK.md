@@ -28,16 +28,16 @@
 ### Prerequisites
 1. **Vercel Account** linked to your GitHub.
 2. **Environment Variable**: 
-   - `VITE_API_BASE_URL`: The URL of your deployed backend API (e.g., `https://finance-os-api.onrender.com`). Do not append `/api` if your client app handles it, or do, depending on your `lib/api.js` setup.
+   - `NEXT_PUBLIC_API_BASE_URL`: The URL of your deployed backend API (e.g., `https://finance-os-api.onrender.com`). Do **not** append `/api` — the client's `lib/api.ts` handles that automatically.
 
 ### Deployment Steps
 1. Import your GitHub repository to Vercel.
-2. Edit Project Framework preset to `Vite`.
-3. Set the Root Directory to `client/finance-ui`.
-4. Build Command: `npm run build`
-5. Output Directory: `dist`
-6. Enter environment variables.
-7. Click "Deploy". The `vercel.json` included in the directory will handle SPA rewrite behaviors automatically.
+2. Framework preset will be auto-detected as **Next.js**.
+3. Set the Root Directory to the repository root (default).
+4. Build Command: `npm run build` (auto-detected).
+5. Output Directory: `.next` (auto-detected).
+6. Enter environment variables (`NEXT_PUBLIC_API_BASE_URL`).
+7. Click "Deploy".
 
 ---
 
