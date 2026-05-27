@@ -5,6 +5,7 @@ const { objectId } = require("./common");
 
 const createRecurringSchema = z
   .object({
+    name: z.string().trim().max(80).optional().default(""),
     account: objectId,
     toAccount: objectId.optional().nullable(),
     category: objectId.optional().nullable(),
@@ -27,6 +28,7 @@ const createRecurringSchema = z
 
 const updateRecurringSchema = z
   .object({
+    name: z.string().trim().max(80).optional(),
     account: objectId.optional(),
     toAccount: objectId.optional().nullable(),
     category: objectId.optional().nullable(),

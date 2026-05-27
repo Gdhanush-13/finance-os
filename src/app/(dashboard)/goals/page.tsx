@@ -13,11 +13,12 @@ import Modal from "@/components/shared/Modal";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import EmptyState from "@/components/shared/EmptyState";
 import ErrorState from "@/components/shared/ErrorState";
-import LoadingScreen from "@/components/shared/LoadingScreen";
+import { GridPageSkeleton } from "@/components/shared/PageSkeleton";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { apiError } from "@/lib/api";
+import { cleanPayload } from "@/lib/cleanPayload";
 import { useGoals, useCreateGoal, useUpdateGoal, useContributeGoal, useDeleteGoal } from "@/hooks/useGoals";
 import type { Goal } from "@/types";
 
@@ -51,8 +52,9 @@ export default function GoalsPage() {
 
   const onSubmit = async (values: GoalValues) => {
     try {
-      if (editing) { await updateGoal.mutateAsync({ id: editing._id, ...values }); toast.success("Goal updated"); }
-      else { await createGoal.mutateAsync(values); toast.success("Goal created"); }
+      const payload = cleanPayload(values);
+      if (editing) { await updateGoal.mutateAsync({ id: editing._id, ...payload }); toast.success("Goal updated"); }
+      else { await createGoal.mutateAsync(payload); toast.success("Goal created"); }
       setModalOpen(false);
     } catch (err) { toast.error(apiError(err)); }
   };
@@ -69,7 +71,7 @@ export default function GoalsPage() {
     catch (err) { toast.error(apiError(err)); }
   };
 
-  if (goals.isLoading) return <LoadingScreen />;
+  if (goals.isLoading) return <GridPageSkeleton />;
   if (goals.isError) return <ErrorState message={apiError(goals.error)} onRetry={() => goals.refetch()} />;
   const data = goals.data || [];
 

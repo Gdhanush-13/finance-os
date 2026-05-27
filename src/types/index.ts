@@ -90,7 +90,8 @@ export interface RecurringRule {
   nextRunAt?: string;
   nextRunDate?: string;
   lastRunAt?: string;
-  active: boolean;
+  active?: boolean;
+  isActive?: boolean;
   account?: Account | null;
   toAccount?: Account | null;
   category?: Category | null;

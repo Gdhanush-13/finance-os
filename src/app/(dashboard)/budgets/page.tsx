@@ -14,10 +14,11 @@ import Modal from "@/components/shared/Modal";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import EmptyState from "@/components/shared/EmptyState";
 import ErrorState from "@/components/shared/ErrorState";
-import LoadingScreen from "@/components/shared/LoadingScreen";
+import { GridPageSkeleton } from "@/components/shared/PageSkeleton";
 import { Progress } from "@/components/ui/progress";
 import { formatCurrency } from "@/lib/format";
 import { apiError } from "@/lib/api";
+import { cleanPayload } from "@/lib/cleanPayload";
 import { useBudgets, useCreateBudget, useUpdateBudget, useDeleteBudget } from "@/hooks/useBudgets";
 import { useCategories } from "@/hooks/useCategories";
 import type { Budget } from "@/types";
@@ -53,17 +54,22 @@ export default function BudgetsPage() {
 
   const openEdit = (b: Budget) => {
     setEditing(b);
-    reset({ name: b.name, amount: b.amount, period: b.period, category: b.category?._id || "", alertThreshold: b.alertThreshold ?? 80 });
+    reset({ name: b.name, amount: b.amount, period: b.period, category: b.category?._id || "", alertThreshold: b.alertThreshold != null ? Math.round(b.alertThreshold * 100) : 80 });
     setModalOpen(true);
   };
 
   const onSubmit = async (values: FormValues) => {
     try {
+      const payload: Record<string, unknown> = {
+        ...cleanPayload(values),
+        alertThreshold: values.alertThreshold != null ? values.alertThreshold / 100 : undefined,
+        startDate: new Date().toISOString(),
+      };
       if (editing) {
-        await updateBudget.mutateAsync({ id: editing._id, ...values });
+        await updateBudget.mutateAsync({ id: editing._id, ...payload });
         toast.success("Budget updated");
       } else {
-        await createBudget.mutateAsync(values);
+        await createBudget.mutateAsync(payload);
         toast.success("Budget created");
       }
       setModalOpen(false);
@@ -76,7 +82,7 @@ export default function BudgetsPage() {
     catch (err) { toast.error(apiError(err)); }
   };
 
-  if (budgets.isLoading) return <LoadingScreen />;
+  if (budgets.isLoading) return <GridPageSkeleton />;
   if (budgets.isError) return <ErrorState message={apiError(budgets.error)} onRetry={() => budgets.refetch()} />;
   const data = budgets.data || [];
 
@@ -95,7 +101,8 @@ export default function BudgetsPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data.map((b) => {
-            const pct = Math.min(b.progress ?? 0, 100);
+            const pct = Math.min((b.progress ?? 0) * 100, 150);
+            const threshold = (b.alertThreshold ?? 0.8) * 100;
             return (
               <Card key={b._id}>
                 <CardHeader
@@ -113,8 +120,8 @@ export default function BudgetsPage() {
                     <span className="text-lg font-semibold text-foreground">{formatCurrency(b.spent ?? 0)}</span>
                     <span className="text-xs text-muted-foreground">of {formatCurrency(b.amount)}</span>
                   </div>
-                  <Progress value={pct} className="mt-2 h-2" />
-                  <p className={`mt-1 text-xs ${pct >= 100 ? "text-destructive" : pct >= (b.alertThreshold ?? 80) ? "text-warning" : "text-muted-foreground"}`}>
+                  <Progress value={Math.min(pct, 100)} className="mt-2 h-2" />
+                  <p className={`mt-1 text-xs ${pct >= 100 ? "text-destructive" : pct >= threshold ? "text-warning" : "text-muted-foreground"}`}>
                     {pct.toFixed(0)}% used · {formatCurrency(b.remaining ?? 0)} remaining
                   </p>
                 </CardBody>

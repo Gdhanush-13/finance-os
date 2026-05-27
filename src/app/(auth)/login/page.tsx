@@ -44,12 +44,14 @@ export default function LoginPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-tight text-foreground">Welcome back</h1>
-      <p className="mt-1.5 text-sm text-muted-foreground">
-        Sign in to your Finance OS account.
+      <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+        Welcome back
+      </h1>
+      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+        Sign in to your Finance&nbsp;OS account to continue managing your finances.
       </p>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5">
         <AppInput
           label="Email"
           type="email"
@@ -66,15 +68,21 @@ export default function LoginPage() {
           error={errors.password?.message}
           {...register("password")}
         />
-        <AppButton type="submit" className="w-full" loading={submitting}>
+        <AppButton type="submit" className="mt-2 h-11 w-full text-sm" loading={submitting}>
           Sign in
         </AppButton>
       </form>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
-        Don&apos;t have an account?{" "}
-        <Link href="/register" className="font-medium text-primary hover:underline">
-          Create one
+      <div className="mt-8 flex items-center gap-3 text-xs text-muted-foreground before:h-px before:flex-1 before:bg-border after:h-px after:flex-1 after:bg-border">
+        New here?
+      </div>
+
+      <p className="mt-4 text-center text-sm text-muted-foreground">
+        <Link
+          href="/register"
+          className="font-medium text-primary transition-colors hover:text-primary/80 hover:underline"
+        >
+          Create a free account
         </Link>
       </p>
     </div>

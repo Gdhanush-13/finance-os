@@ -10,6 +10,7 @@ const recurringSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    name: { type: String, trim: true, default: "", maxlength: 80 },
     account: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Account",

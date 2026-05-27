@@ -46,12 +46,14 @@ export default function RegisterPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-tight text-foreground">Create your account</h1>
-      <p className="mt-1.5 text-sm text-muted-foreground">
-        Start tracking your finances in minutes.
+      <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+        Create your account
+      </h1>
+      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+        Start tracking your finances in minutes — it&apos;s completely free.
       </p>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5">
         <AppInput
           label="Full name"
           placeholder="Jane Doe"
@@ -75,15 +77,21 @@ export default function RegisterPage() {
           error={errors.password?.message}
           {...register("password")}
         />
-        <AppButton type="submit" className="w-full" loading={submitting}>
+        <AppButton type="submit" className="mt-2 h-11 w-full text-sm" loading={submitting}>
           Create account
         </AppButton>
       </form>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
-        Already have an account?{" "}
-        <Link href="/login" className="font-medium text-primary hover:underline">
-          Sign in
+      <div className="mt-8 flex items-center gap-3 text-xs text-muted-foreground before:h-px before:flex-1 before:bg-border after:h-px after:flex-1 after:bg-border">
+        Already a member?
+      </div>
+
+      <p className="mt-4 text-center text-sm text-muted-foreground">
+        <Link
+          href="/login"
+          className="font-medium text-primary transition-colors hover:text-primary/80 hover:underline"
+        >
+          Sign in to your account
         </Link>
       </p>
     </div>

@@ -14,9 +14,10 @@ import Modal from "@/components/shared/Modal";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import EmptyState from "@/components/shared/EmptyState";
 import ErrorState from "@/components/shared/ErrorState";
-import LoadingScreen from "@/components/shared/LoadingScreen";
+import { GridPageSkeleton } from "@/components/shared/PageSkeleton";
 import { formatCurrency } from "@/lib/format";
 import { apiError } from "@/lib/api";
+import { cleanPayload } from "@/lib/cleanPayload";
 import { useAccounts, useCreateAccount, useUpdateAccount, useDeleteAccount } from "@/hooks/useAccounts";
 import type { Account } from "@/types";
 
@@ -64,11 +65,12 @@ export default function AccountsPage() {
 
   const onSubmit = async (values: FormValues) => {
     try {
+      const payload = cleanPayload(values);
       if (editing) {
-        await updateAcct.mutateAsync({ id: editing._id, ...values });
+        await updateAcct.mutateAsync({ id: editing._id, ...payload });
         toast.success("Account updated");
       } else {
-        await createAcct.mutateAsync(values);
+        await createAcct.mutateAsync(payload);
         toast.success("Account created");
       }
       setModalOpen(false);
@@ -84,7 +86,7 @@ export default function AccountsPage() {
     } catch (err) { toast.error(apiError(err)); }
   };
 
-  if (accounts.isLoading) return <LoadingScreen />;
+  if (accounts.isLoading) return <GridPageSkeleton />;
   if (accounts.isError) return <ErrorState message={apiError(accounts.error)} onRetry={() => accounts.refetch()} />;
 
   const data = accounts.data || [];

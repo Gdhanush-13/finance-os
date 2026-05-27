@@ -14,9 +14,10 @@ import Modal from "@/components/shared/Modal";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import EmptyState from "@/components/shared/EmptyState";
 import ErrorState from "@/components/shared/ErrorState";
-import LoadingScreen from "@/components/shared/LoadingScreen";
+import { TablePageSkeleton } from "@/components/shared/PageSkeleton";
 import { Badge } from "@/components/ui/badge";
 import { apiError } from "@/lib/api";
+import { cleanPayload } from "@/lib/cleanPayload";
 import { useCategories, useCreateCategory, useDeleteCategory } from "@/hooks/useCategories";
 
 const schema = z.object({
@@ -41,7 +42,7 @@ export default function CategoriesPage() {
   const openAdd = () => { reset({ name: "", kind: tab, color: "", icon: "" }); setModalOpen(true); };
 
   const onSubmit = async (values: FormValues) => {
-    try { await createCat.mutateAsync(values); toast.success("Category created"); setModalOpen(false); }
+    try { await createCat.mutateAsync(cleanPayload(values)); toast.success("Category created"); setModalOpen(false); }
     catch (err) { toast.error(apiError(err)); }
   };
 
@@ -51,7 +52,7 @@ export default function CategoriesPage() {
     catch (err) { toast.error(apiError(err)); }
   };
 
-  if (cats.isLoading) return <LoadingScreen />;
+  if (cats.isLoading) return <TablePageSkeleton />;
   if (cats.isError) return <ErrorState message={apiError(cats.error)} onRetry={() => cats.refetch()} />;
 
   const filtered = (cats.data || []).filter((c) => c.kind === tab);

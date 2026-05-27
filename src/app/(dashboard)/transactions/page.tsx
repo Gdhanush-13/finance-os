@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Pencil, Trash2, Search } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,10 +14,11 @@ import Modal from "@/components/shared/Modal";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import EmptyState from "@/components/shared/EmptyState";
 import ErrorState from "@/components/shared/ErrorState";
-import LoadingScreen from "@/components/shared/LoadingScreen";
+import { TablePageSkeleton, ListRowSkeleton } from "@/components/shared/PageSkeleton";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { apiError } from "@/lib/api";
+import { cleanPayload } from "@/lib/cleanPayload";
 import {
   useTransactions,
   useCreateTransaction,
@@ -27,6 +28,7 @@ import {
 import { useAccounts } from "@/hooks/useAccounts";
 import { useCategories } from "@/hooks/useCategories";
 import type { Transaction } from "@/types";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const schema = z.object({
   type: z.enum(["income", "expense", "transfer"]),
@@ -43,10 +45,13 @@ type FormValues = z.infer<typeof schema>;
 export default function TransactionsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 400);
   const [typeFilter, setTypeFilter] = useState("");
   const params: Record<string, unknown> = { page, limit: 20 };
-  if (search) params.search = search;
+  if (debouncedSearch) params.search = debouncedSearch;
   if (typeFilter) params.type = typeFilter;
+
+  useEffect(() => { setPage(1); }, [debouncedSearch]);
 
   const txns = useTransactions(params);
   const accounts = useAccounts();
@@ -91,11 +96,12 @@ export default function TransactionsPage() {
 
   const onSubmit = async (values: FormValues) => {
     try {
+      const payload = cleanPayload(values);
       if (editing) {
-        await updateTx.mutateAsync({ id: editing._id, ...values });
+        await updateTx.mutateAsync({ id: editing._id, ...payload });
         toast.success("Transaction updated");
       } else {
-        await createTx.mutateAsync(values);
+        await createTx.mutateAsync(payload);
         toast.success("Transaction created");
       }
       setModalOpen(false);
@@ -115,7 +121,7 @@ export default function TransactionsPage() {
     }
   };
 
-  if (txns.isLoading) return <LoadingScreen />;
+  if (txns.isLoading) return <TablePageSkeleton />;
   if (txns.isError) return <ErrorState message={apiError(txns.error)} onRetry={() => txns.refetch()} />;
 
   const data = txns.data?.data || [];
@@ -142,14 +148,14 @@ export default function TransactionsPage() {
             <input
               placeholder="Search..."
               value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="h-9 w-full rounded-md border border-input bg-card pl-8 pr-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-9 w-full rounded-md border border-input bg-card pl-8 pr-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
           <select
             value={typeFilter}
             onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
-            className="h-9 rounded-md border border-input bg-card px-2 text-sm"
+            className="h-9 rounded-md border border-input bg-card px-2 text-sm text-foreground"
           >
             <option value="">All types</option>
             <option value="income">Income</option>

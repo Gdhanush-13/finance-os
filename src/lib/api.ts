@@ -44,16 +44,29 @@ api.interceptors.response.use(
   }
 );
 
+interface ApiErrorDetail {
+  path: string;
+  message: string;
+}
+
 interface ApiErrorData {
-  error?: { message?: string };
+  error?: { message?: string; details?: ApiErrorDetail[] };
   message?: string;
 }
 
 export function apiError(err: unknown, fallback = "Something went wrong"): string {
   const e = err as AxiosError<ApiErrorData>;
+  const data = e?.response?.data;
+
+  if (data?.error?.details?.length) {
+    return data.error.details
+      .map((d) => `${d.path}: ${d.message}`)
+      .join(", ");
+  }
+
   return (
-    e?.response?.data?.error?.message ||
-    e?.response?.data?.message ||
+    data?.error?.message ||
+    data?.message ||
     e?.message ||
     fallback
   );

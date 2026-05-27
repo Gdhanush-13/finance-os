@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useCallback, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -22,6 +22,7 @@ import {
 import { useAuth } from "@/auth/AuthContext";
 import { cn } from "@/lib/utils";
 import { APP_CONFIG } from "@/lib/config";
+import { useTheme } from "@/hooks/useTheme";
 
 interface NavItem {
   to: string;
@@ -51,22 +52,12 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [openMobile, setOpenMobile] = useState(false);
-  const [dark, setDark] = useState(false);
+  const { dark, toggleTheme } = useTheme();
 
-  useEffect(() => {
-    const saved = localStorage.getItem("finance-os.theme");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const isDark = saved === "dark" || (!saved && prefersDark);
-    setDark(isDark);
-    document.documentElement.classList.toggle("dark", isDark);
-  }, []);
-
-  const toggleTheme = () => {
-    const next = !dark;
-    setDark(next);
-    document.documentElement.classList.toggle("dark", next);
-    localStorage.setItem("finance-os.theme", next ? "dark" : "light");
-  };
+  const prefetch = useCallback(
+    (href: string) => router.prefetch(href),
+    [router]
+  );
 
   const onLogout = () => {
     logout();
@@ -114,7 +105,9 @@ export default function MainLayout({ children }: { children: ReactNode }) {
                 <li key={item.to}>
                   <Link
                     href={item.to}
+                    prefetch={true}
                     onClick={() => setOpenMobile(false)}
+                    onMouseEnter={() => prefetch(item.to)}
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                       active
@@ -211,7 +204,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
         </header>
 
         <main className="flex-1 px-4 py-6 lg:px-8 lg:py-8">
-          <div className="mx-auto w-full max-w-7xl">{children}</div>
+          <div className="mx-auto w-full max-w-7xl animate-in fade-in duration-200">{children}</div>
         </main>
       </div>
     </div>

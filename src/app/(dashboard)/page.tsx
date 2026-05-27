@@ -14,7 +14,7 @@ import {
   Pie,
 } from "recharts";
 import { Card, CardHeader, CardBody } from "@/components/shared/AppCard";
-import LoadingScreen from "@/components/shared/LoadingScreen";
+import { DashboardSkeleton, ListRowSkeleton } from "@/components/shared/PageSkeleton";
 import ErrorState from "@/components/shared/ErrorState";
 import { formatCurrency, formatDate } from "@/lib/format";
 import {
@@ -41,7 +41,7 @@ export default function DashboardPage() {
   const categories = useCategoryBreakdown({ type: "expense" });
   const recent = useRecentTransactions(8);
 
-  if (summary.isLoading) return <LoadingScreen />;
+  if (summary.isLoading) return <DashboardSkeleton />;
   if (summary.isError) return <ErrorState message={apiError(summary.error)} onRetry={() => summary.refetch()} />;
 
   const s = summary.data;
@@ -105,7 +105,7 @@ export default function DashboardPage() {
           <CardHeader title="Cashflow" subtitle="Income vs expenses over time" />
           <CardBody className="h-72">
             {cashflow.isLoading ? (
-              <LoadingScreen label="Loading chart..." />
+              <div className="flex h-full items-end gap-3 px-2">{Array.from({length:6}).map((_,i)=>(<div key={i} className="flex-1 animate-pulse rounded-t-md bg-muted" style={{height:`${30+Math.random()*50}%`}} />))}</div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={cashflow.data || []} barGap={4}>
@@ -117,6 +117,7 @@ export default function DashboardPage() {
                       borderRadius: 8,
                       border: "1px solid hsl(var(--border))",
                       background: "hsl(var(--card))",
+                      color: "hsl(var(--foreground))",
                       fontSize: 12,
                     }}
                   />
@@ -132,7 +133,7 @@ export default function DashboardPage() {
           <CardHeader title="Spending Breakdown" subtitle="By category" />
           <CardBody className="h-72">
             {categories.isLoading ? (
-              <LoadingScreen label="Loading chart..." />
+              <div className="flex h-full items-center justify-center"><div className="h-36 w-36 animate-pulse rounded-full bg-muted" /></div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -156,6 +157,7 @@ export default function DashboardPage() {
                       borderRadius: 8,
                       border: "1px solid hsl(var(--border))",
                       background: "hsl(var(--card))",
+                      color: "hsl(var(--foreground))",
                       fontSize: 12,
                     }}
                   />
@@ -170,7 +172,7 @@ export default function DashboardPage() {
         <CardHeader title="Recent Transactions" subtitle="Your latest activity" />
         <CardBody>
           {recent.isLoading ? (
-            <LoadingScreen label="Loading..." />
+            <div className="divide-y divide-border">{Array.from({length:5}).map((_,i)=>(<ListRowSkeleton key={i} />))}</div>
           ) : (
             <div className="divide-y divide-border">
               {(recent.data || []).map((tx) => (

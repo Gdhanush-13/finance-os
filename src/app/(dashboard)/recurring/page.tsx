@@ -14,10 +14,11 @@ import Modal from "@/components/shared/Modal";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import EmptyState from "@/components/shared/EmptyState";
 import ErrorState from "@/components/shared/ErrorState";
-import LoadingScreen from "@/components/shared/LoadingScreen";
+import { GridPageSkeleton } from "@/components/shared/PageSkeleton";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { apiError } from "@/lib/api";
+import { cleanPayload } from "@/lib/cleanPayload";
 import { useRecurring, useCreateRecurring, useUpdateRecurring, useDeleteRecurring, useRunRecurringNow } from "@/hooks/useRecurring";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useCategories } from "@/hooks/useCategories";
@@ -69,8 +70,9 @@ export default function RecurringPage() {
 
   const onSubmit = async (values: FormValues) => {
     try {
-      if (editing) { await updateRule.mutateAsync({ id: editing._id, ...values }); toast.success("Rule updated"); }
-      else { await createRule.mutateAsync(values); toast.success("Rule created"); }
+      const payload = cleanPayload(values);
+      if (editing) { await updateRule.mutateAsync({ id: editing._id, ...payload }); toast.success("Rule updated"); }
+      else { await createRule.mutateAsync(payload); toast.success("Rule created"); }
       setModalOpen(false);
     } catch (err) { toast.error(apiError(err)); }
   };
@@ -88,7 +90,7 @@ export default function RecurringPage() {
     } catch (err) { toast.error(apiError(err)); }
   };
 
-  if (rules.isLoading) return <LoadingScreen />;
+  if (rules.isLoading) return <GridPageSkeleton />;
   if (rules.isError) return <ErrorState message={apiError(rules.error)} onRetry={() => rules.refetch()} />;
   const data = rules.data || [];
 
@@ -116,7 +118,7 @@ export default function RecurringPage() {
                 subtitle={`${r.frequency} · every ${r.interval > 1 ? `${r.interval} ` : ""}${r.frequency.replace(/ly$/, "")}`}
                 action={
                   <div className="flex gap-1">
-                    <Badge variant={r.active ? "default" : "secondary"} className="text-[10px]">{r.active ? "Active" : "Paused"}</Badge>
+                    <Badge variant={(r.isActive ?? r.active) ? "default" : "secondary"} className="text-[10px]">{(r.isActive ?? r.active) ? "Active" : "Paused"}</Badge>
                     <AppButton size="icon" variant="ghost" onClick={() => openEdit(r)}><Pencil className="h-3.5 w-3.5" /></AppButton>
                     <AppButton size="icon" variant="ghost" onClick={() => setDeleteId(r._id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></AppButton>
                   </div>

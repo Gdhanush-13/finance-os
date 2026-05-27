@@ -9,6 +9,7 @@ import AppButton from "@/components/shared/AppButton";
 import AppInput from "@/components/shared/AppInput";
 import { useAuth } from "@/auth/AuthContext";
 import { apiError } from "@/lib/api";
+import { cleanPayload } from "@/lib/cleanPayload";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Name is too short"),
@@ -44,7 +45,7 @@ export default function ProfilePage() {
 
   const onProfileSubmit = async (values: ProfileValues) => {
     try {
-      await updateProfile(values);
+      await updateProfile(cleanPayload(values));
       toast.success("Profile updated");
     } catch (err) {
       toast.error(apiError(err));

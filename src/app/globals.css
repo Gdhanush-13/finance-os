@@ -124,6 +124,13 @@
   }
 }
 
+@layer base {
+  select option {
+    background-color: hsl(var(--card));
+    color: hsl(var(--foreground));
+  }
+}
+
 @layer utilities {
   .text-income { color: hsl(var(--income)); }
   .text-expense { color: hsl(var(--expense)); }
