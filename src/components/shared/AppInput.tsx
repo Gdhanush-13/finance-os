@@ -1,6 +1,7 @@
 "use client";
 
-import { forwardRef, type InputHTMLAttributes, type ReactNode } from "react";
+import { forwardRef, useState, type InputHTMLAttributes, type ReactNode } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { Input as ShadcnInput } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -11,23 +12,42 @@ interface AppInputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const AppInput = forwardRef<HTMLInputElement, AppInputProps>(function AppInput(
-  { label, error, hint, className, ...rest },
+  { label, error, hint, className, type, ...rest },
   ref
 ) {
+  const [showPassword, setShowPassword] = useState(false);
+  const isPassword = type === "password";
+  const resolvedType = isPassword ? (showPassword ? "text" : "password") : type;
+
   return (
     <label className="block">
       {label && (
         <span className="mb-1.5 block text-xs font-medium text-foreground">{label}</span>
       )}
-      <ShadcnInput
-        ref={ref}
-        className={cn(
-          "h-9 bg-card",
-          error && "border-destructive focus-visible:ring-destructive/30",
-          className
+      <div className="relative">
+        <ShadcnInput
+          ref={ref}
+          type={resolvedType}
+          className={cn(
+            "h-9 bg-card",
+            isPassword && "pr-9",
+            error && "border-destructive focus-visible:ring-destructive/30",
+            className
+          )}
+          {...rest}
+        />
+        {isPassword && (
+          <button
+            type="button"
+            tabIndex={-1}
+            onClick={() => setShowPassword((v) => !v)}
+            className="absolute inset-y-0 right-0 flex items-center px-2.5 text-muted-foreground hover:text-foreground"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
         )}
-        {...rest}
-      />
+      </div>
       {error && <span className="mt-1 block text-xs text-destructive">{error}</span>}
       {hint && !error && (
         <span className="mt-1 block text-xs text-muted-foreground">{hint}</span>
