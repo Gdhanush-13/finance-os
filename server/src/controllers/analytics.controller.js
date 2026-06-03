@@ -18,7 +18,7 @@ exports.summary = asyncHandler(async (req, res) => {
 
   const [byType, accounts, budgetCount, goals] = await Promise.all([
     Transaction.aggregate([
-      { $match: { user: userId, date: { $gte: from, $lte: to } } },
+      { $match: { user: userId, date: { $gte: from, $lte: to }, deletedAt: null } },
       { $group: { _id: "$type", total: { $sum: "$amount" }, count: { $sum: 1 } } },
     ]),
     Account.find({ user: userId, isArchived: false }).select(
@@ -60,7 +60,7 @@ exports.cashflow = asyncHandler(async (req, res) => {
   const start = dayjs().startOf("month").subtract(months - 1, "month").toDate();
 
   const data = await Transaction.aggregate([
-    { $match: { user: userId, date: { $gte: start }, type: { $in: ["income", "expense"] } } },
+    { $match: { user: userId, date: { $gte: start }, type: { $in: ["income", "expense"] }, deletedAt: null } },
     {
       $group: {
         _id: {
@@ -94,7 +94,7 @@ exports.categoryBreakdown = asyncHandler(async (req, res) => {
   const type = req.query.type === "income" ? "income" : "expense";
 
   const data = await Transaction.aggregate([
-    { $match: { user: userId, type, date: { $gte: from, $lte: to } } },
+    { $match: { user: userId, type, date: { $gte: from, $lte: to }, deletedAt: null } },
     {
       $group: {
         _id: "$category",
@@ -136,7 +136,7 @@ exports.categoryBreakdown = asyncHandler(async (req, res) => {
 exports.recent = asyncHandler(async (req, res) => {
   const userId = req.user._id;
   const limit = Math.min(parseInt(req.query.limit || "10", 10), 50);
-  const items = await Transaction.find({ user: userId })
+  const items = await Transaction.find({ user: userId, deletedAt: null })
     .sort({ date: -1, createdAt: -1 })
     .limit(limit)
     .populate("account", "name color icon")
