@@ -32,7 +32,7 @@ exports.list = asyncHandler(async (req, res) => {
 
   const [items, total] = await Promise.all([
     Transaction.find(filter)
-      .sort(sortMap[sort])
+      .sort(sortMap[sort] ?? { date: -1, createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)
       .populate("account", "name type color icon currency")
@@ -122,8 +122,8 @@ exports.transfer = asyncHandler(async (req, res) => {
     }], { session });
     
     // Update account balances atomically
-    await txService.updateAccountBalance(account, -amount, session);
-    await txService.updateAccountBalance(toAccount, amount, session);
+    await txService.updateAccountBalance(req.user._id, account, -amount, session);
+    await txService.updateAccountBalance(req.user._id, toAccount, amount, session);
     
     await session.commitTransaction();
     

@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { api, getToken, setToken } from "@/lib/api";
+import { api, setToken } from "@/lib/api";
 import type { User } from "@/types";
 
 interface AuthContextValue {
@@ -29,11 +29,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      setLoading(false);
-      return;
-    }
     api
       .get("/auth/me")
       .then((res) => setUser(res.data.data.user))
