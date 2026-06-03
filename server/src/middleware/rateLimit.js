@@ -17,4 +17,16 @@ const authLimiter = rateLimit({
   skip: () => env.isTest,
 });
 
-module.exports = { apiLimiter, authLimiter };
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // limit each IP to 5 login attempts per windowMs
+  message: {
+    success: false,
+    error: { message: "Too many login attempts, please try again after 15 minutes" }
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => env.isTest,
+});
+
+module.exports = { apiLimiter, authLimiter, loginLimiter };

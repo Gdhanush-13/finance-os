@@ -6,7 +6,7 @@ const txService = require("../services/transaction.service");
 exports.list = asyncHandler(async (req, res) => {
   const { page, limit, type, account, category, from, to, search, sort } =
     req.query;
-  const filter = { user: req.user._id };
+  const filter = { user: req.user._id, deletedAt: null };
   if (type) filter.type = type;
   if (account) filter.account = account;
   if (category) filter.category = category;
@@ -61,6 +61,7 @@ exports.get = asyncHandler(async (req, res) => {
   const tx = await Transaction.findOne({
     _id: req.params.id,
     user: req.user._id,
+    deletedAt: null,
   })
     .populate("account", "name type color icon currency")
     .populate("toAccount", "name type color icon currency")
@@ -85,4 +86,58 @@ exports.update = asyncHandler(async (req, res) => {
 exports.remove = asyncHandler(async (req, res) => {
   await txService.deleteTransaction(req.user._id, req.params.id);
   res.json({ success: true, data: { message: "Transaction deleted" } });
+});
+
+exports.transfer = asyncHandler(async (req, res) => {
+  const session = await Transaction.startSession();
+  session.startTransaction();
+  
+  try {
+    const { account, toAccount, amount, currency, description, notes, date } = req.body;
+    
+    // Create debit transaction (money out of source account)
+    const debitTx = await Transaction.create([{
+      user: req.user._id,
+      account,
+      toAccount,
+      type: "transfer",
+      amount,
+      currency: currency || "USD",
+      description: description || "Transfer",
+      notes: notes || "",
+      date,
+    }], { session });
+    
+    // Create credit transaction (money into destination account)
+    const creditTx = await Transaction.create([{
+      user: req.user._id,
+      account: toAccount,
+      toAccount: account,
+      type: "transfer",
+      amount,
+      currency: currency || "USD",
+      description: description || "Transfer",
+      notes: notes || "",
+      date,
+    }], { session });
+    
+    // Update account balances atomically
+    await txService.updateAccountBalance(account, -amount, session);
+    await txService.updateAccountBalance(toAccount, amount, session);
+    
+    await session.commitTransaction();
+    
+    // Populate and return the debit transaction
+    const populated = await Transaction.findById(debitTx[0]._id)
+      .populate("account", "name type color icon currency")
+      .populate("toAccount", "name type color icon currency")
+      .populate("category", "name kind color icon");
+    
+    res.status(201).json({ success: true, data: populated });
+  } catch (err) {
+    await session.abortTransaction();
+    throw err;
+  } finally {
+    session.endSession();
+  }
 });

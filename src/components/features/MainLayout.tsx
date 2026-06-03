@@ -18,11 +18,13 @@ import {
   User,
   Sun,
   Moon,
+  BarChart2,
 } from "lucide-react";
 import { useAuth } from "@/auth/AuthContext";
 import { cn } from "@/lib/utils";
 import { APP_CONFIG } from "@/lib/config";
 import { useTheme } from "@/hooks/useTheme";
+import FloatingActionButton from "@/components/shared/FloatingActionButton";
 
 interface NavItem {
   to: string;
@@ -38,6 +40,7 @@ const navItems: NavItem[] = [
   { to: "/budgets", label: "Budgets", icon: PiggyBank },
   { to: "/goals", label: "Goals", icon: Target },
   { to: "/recurring", label: "Recurring", icon: Repeat },
+  { to: "/analytics", label: "Analytics", icon: BarChart2 },
   { to: "/categories", label: "Categories", icon: Tags },
   { to: "/import-export", label: "Import / Export", icon: Upload },
 ];
@@ -59,8 +62,8 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     [router]
   );
 
-  const onLogout = () => {
-    logout();
+  const onLogout = async () => {
+    await logout();
     router.replace("/login");
   };
 
@@ -207,6 +210,14 @@ export default function MainLayout({ children }: { children: ReactNode }) {
           <div className="mx-auto w-full max-w-7xl animate-in fade-in duration-200">{children}</div>
         </main>
       </div>
+      
+      {/* Floating Action Button for adding transactions */}
+      {pathname !== "/transactions" && (
+        <FloatingActionButton
+          onClick={() => router.push("/transactions")}
+          label="Add Transaction"
+        />
+      )}
     </div>
   );
 }

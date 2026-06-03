@@ -45,3 +45,18 @@ export function useRecentTransactions(limit = 8) {
       (await api.get("/analytics/recent", { params: { limit } })).data.data as Transaction[],
   });
 }
+
+// Combined hook for analytics page
+export function useAnalytics(params: Record<string, unknown> = {}) {
+  const summary = useSummary(params);
+  const cashflow = useCashflow(6);
+  const categoryBreakdown = useCategoryBreakdown(params);
+  
+  return {
+    summary: summary.data,
+    cashflow: cashflow.data,
+    categoryBreakdown: categoryBreakdown.data,
+    isLoading: summary.isLoading || cashflow.isLoading || categoryBreakdown.isLoading,
+    error: summary.error || cashflow.error || categoryBreakdown.error,
+  };
+}

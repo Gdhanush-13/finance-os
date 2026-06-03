@@ -16,7 +16,7 @@ interface AuthContextValue {
   loading: boolean;
   login: (email: string, password: string) => Promise<User>;
   register: (name: string, email: string, password: string) => Promise<User>;
-  logout: () => void;
+  logout: () => Promise<void>;
   updateProfile: (payload: Partial<User> & { password?: string }) => Promise<User>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   setUser: (user: User | null) => void;
@@ -43,19 +43,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const res = await api.post("/auth/login", { email, password });
-    setToken(res.data.data.token);
+    if (res.data.data.token) setToken(res.data.data.token);
     setUser(res.data.data.user);
     return res.data.data.user as User;
   };
 
   const register = async (name: string, email: string, password: string) => {
     const res = await api.post("/auth/register", { name, email, password });
-    setToken(res.data.data.token);
+    if (res.data.data.token) setToken(res.data.data.token);
     setUser(res.data.data.user);
     return res.data.data.user as User;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try { await api.post("/auth/logout"); } catch { /* ignore */ }
     setToken(null);
     setUser(null);
   };

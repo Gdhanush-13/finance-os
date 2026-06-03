@@ -2,11 +2,15 @@ const ApiError = require("../utils/ApiError");
 const Account = require("../models/Account");
 const Transaction = require("../models/Transaction");
 
-async function applyBalanceDelta(userId, accountId, delta) {
-  const account = await Account.findOne({ _id: accountId, user: userId });
+async function applyBalanceDelta(userId, accountId, delta, session) {
+  const account = await Account.findOne({ _id: accountId, user: userId }).session(session);
   if (!account) throw ApiError.badRequest("Account not found");
   account.currentBalance += delta;
-  await account.save();
+  await account.save({ session });
+}
+
+async function updateAccountBalance(userId, accountId, delta, session) {
+  await applyBalanceDelta(userId, accountId, delta, session);
 }
 
 function deltaForType(type, amount) {
@@ -21,7 +25,16 @@ async function createTransaction(userId, payload) {
       throw ApiError.badRequest("Transfer requires distinct toAccount");
     }
   }
-  const tx = await Transaction.create({ ...payload, user: userId });
+  
+  // Get account to copy currency if not provided
+  let currency = payload.currency;
+  if (!currency) {
+    const account = await Account.findOne({ _id: payload.account, user: userId });
+    if (!account) throw ApiError.badRequest("Account not found");
+    currency = account.currency || "USD";
+  }
+  
+  const tx = await Transaction.create({ ...payload, currency, user: userId });
   if (tx.type === "transfer") {
     await applyBalanceDelta(userId, tx.account, -tx.amount);
     await applyBalanceDelta(userId, tx.toAccount, tx.amount);
@@ -41,15 +54,16 @@ async function reverseTransactionEffects(userId, tx) {
 }
 
 async function deleteTransaction(userId, id) {
-  const tx = await Transaction.findOne({ _id: id, user: userId });
+  const tx = await Transaction.findOne({ _id: id, user: userId, deletedAt: null });
   if (!tx) throw ApiError.notFound("Transaction not found");
   await reverseTransactionEffects(userId, tx);
-  await tx.deleteOne();
+  tx.deletedAt = new Date();
+  await tx.save();
   return { _id: id };
 }
 
 async function updateTransaction(userId, id, payload) {
-  const existing = await Transaction.findOne({ _id: id, user: userId });
+  const existing = await Transaction.findOne({ _id: id, user: userId, deletedAt: null });
   if (!existing) throw ApiError.notFound("Transaction not found");
   await reverseTransactionEffects(userId, existing);
 
@@ -84,5 +98,6 @@ module.exports = {
   updateTransaction,
   reverseTransactionEffects,
   applyBalanceDelta,
+  updateAccountBalance,
   deltaForType,
 };

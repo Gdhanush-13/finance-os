@@ -3,6 +3,14 @@ const asyncHandler = require("../utils/asyncHandler");
 const { generateToken } = require("../utils/generateToken");
 const User = require("../models/User");
 const { seedDefaultsForUser } = require("../services/seed.service");
+const env = require("../config/env");
+
+const COOKIE_OPTS = {
+  httpOnly: true,
+  secure: env.isProd,
+  sameSite: env.isProd ? "strict" : "lax",
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+};
 
 function userResponse(user) {
   return {
@@ -25,6 +33,7 @@ exports.register = asyncHandler(async (req, res) => {
   await seedDefaultsForUser(user._id);
 
   const token = generateToken(user._id);
+  res.cookie("token", token, COOKIE_OPTS);
   res.status(201).json({ success: true, data: { user: userResponse(user), token } });
 });
 
@@ -37,6 +46,7 @@ exports.login = asyncHandler(async (req, res) => {
   if (!ok) throw ApiError.unauthorized("Invalid email or password");
 
   const token = generateToken(user._id);
+  res.cookie("token", token, COOKIE_OPTS);
   res.json({ success: true, data: { user: userResponse(user), token } });
 });
 
@@ -50,6 +60,11 @@ exports.updateProfile = asyncHandler(async (req, res) => {
     runValidators: true,
   });
   res.json({ success: true, data: { user: userResponse(updated) } });
+});
+
+exports.logout = asyncHandler(async (_req, res) => {
+  res.clearCookie("token", { httpOnly: true, secure: env.isProd, sameSite: env.isProd ? "strict" : "lax" });
+  res.json({ success: true, data: { message: "Logged out" } });
 });
 
 exports.changePassword = asyncHandler(async (req, res) => {

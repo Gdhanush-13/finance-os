@@ -50,8 +50,24 @@ const listTransactionsQuery = z.object({
   sort: z.enum(["date", "-date", "amount", "-amount"]).default("-date"),
 });
 
+const transferSchema = z
+  .object({
+    account: objectId,
+    toAccount: objectId,
+    amount: z.coerce.number().positive(),
+    currency: z.string().trim().toUpperCase().length(3).optional(),
+    description: z.string().trim().max(240).optional().default(""),
+    notes: z.string().trim().max(1000).optional().default(""),
+    date: z.coerce.date(),
+  })
+  .refine((v) => v.toAccount !== v.account, {
+    message: "toAccount must be different from account",
+    path: ["toAccount"],
+  });
+
 module.exports = {
   createTransactionSchema,
   updateTransactionSchema,
   listTransactionsQuery,
+  transferSchema,
 };

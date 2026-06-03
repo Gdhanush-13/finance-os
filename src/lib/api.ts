@@ -4,7 +4,7 @@ const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
 export const api = axios.create({
   baseURL: `${baseURL}/api`,
-  withCredentials: false,
+  withCredentials: true,
   timeout: 20000,
 });
 

@@ -7,6 +7,7 @@ const {
   createTransactionSchema,
   updateTransactionSchema,
   listTransactionsQuery,
+  transferSchema,
 } = require("../validators/transaction");
 
 const router = express.Router();
@@ -21,5 +22,6 @@ router.patch(
   ctrl.update
 );
 router.delete("/:id", validate({ params: idParam }), ctrl.remove);
+router.post("/transfer", validate({ body: transferSchema }), ctrl.transfer);
 
 module.exports = router;

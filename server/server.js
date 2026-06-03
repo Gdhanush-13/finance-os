@@ -3,11 +3,13 @@ const env = require("./src/config/env");
 const buildApp = require("./src/app");
 const { connectDB } = require("./src/config/db");
 const logger = require("./src/utils/logger");
+const { startCronJobs } = require("./src/services/cron");
 
 async function start() {
   try {
     await connectDB();
     logger.info("MongoDB connected successfully");
+    if (!env.isTest) startCronJobs();
   } catch (err) {
     logger.warn("MongoDB connection failed – server will start without DB", err.message);
   }

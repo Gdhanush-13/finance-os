@@ -2,6 +2,7 @@
 
 import MainLayout from "@/components/features/MainLayout";
 import { ProtectedRoute } from "@/components/features/AuthGuard";
+import ErrorBoundary from "@/components/shared/ErrorBoundary";
 
 export default function DashboardLayout({
   children,
@@ -10,7 +11,9 @@ export default function DashboardLayout({
 }) {
   return (
     <ProtectedRoute>
-      <MainLayout>{children}</MainLayout>
+      <MainLayout>
+        <ErrorBoundary>{children}</ErrorBoundary>
+      </MainLayout>
     </ProtectedRoute>
   );
 }
