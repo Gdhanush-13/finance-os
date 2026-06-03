@@ -16,10 +16,10 @@ export default function FloatingActionButton({
         type="button"
         onClick={onClick}
         aria-label={label}
-        className="group flex items-center gap-2 rounded-full bg-primary px-4 py-3.5 text-primary-foreground shadow-lg transition-all duration-200 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        className="group flex items-center gap-0 rounded-full bg-primary px-4 py-3.5 text-primary-foreground shadow-lg transition-all duration-200 hover:gap-2 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
-        <Plus className="h-5 w-5 shrink-0" />
-        <span className="max-w-0 overflow-hidden whitespace-nowrap text-sm font-medium transition-all duration-200 group-hover:max-w-[120px]">
+        <Plus className="h-5 w-5 shrink-0 stroke-[2.5]" />
+        <span className="max-w-0 overflow-hidden whitespace-nowrap text-sm font-semibold transition-all duration-200 group-hover:max-w-[140px]">
           {label}
         </span>
       </button>
