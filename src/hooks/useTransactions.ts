@@ -45,6 +45,17 @@ export function useDeleteTransaction() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => (await api.delete(`/transactions/${id}`)).data,
-    onSuccess: () => invalidateAll(qc),
+    onMutate: async (id: string) => {
+      await qc.cancelQueries({ queryKey: ["transactions"] });
+      const snapshots = qc.getQueriesData<TransactionsResponse>({ queryKey: ["transactions"] });
+      qc.setQueriesData<TransactionsResponse>({ queryKey: ["transactions"] }, (old) =>
+        old ? { ...old, data: old.data.filter((t) => t._id !== id) } : old
+      );
+      return { snapshots };
+    },
+    onError: (_err, _id, ctx) => {
+      ctx?.snapshots.forEach(([key, val]) => qc.setQueryData(key, val));
+    },
+    onSettled: () => invalidateAll(qc),
   });
 }

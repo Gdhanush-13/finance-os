@@ -27,17 +27,55 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+let isRefreshing = false;
+let refreshQueue: Array<(token: string | null) => void> = [];
+
+function drainQueue(token: string | null) {
+  refreshQueue.forEach((cb) => cb(token));
+  refreshQueue = [];
+}
+
 api.interceptors.response.use(
   (res) => res,
-  (err: AxiosError) => {
-    if (err.response?.status === 401) {
-      setToken(null);
-      if (
-        typeof window !== "undefined" &&
-        !window.location.pathname.startsWith("/login") &&
-        !window.location.pathname.startsWith("/register")
-      ) {
-        window.location.href = "/login";
+  async (err: AxiosError) => {
+    const original = err.config as typeof err.config & { _retry?: boolean };
+    if (
+      err.response?.status === 401 &&
+      original &&
+      !original._retry &&
+      !original.url?.includes("/auth/refresh") &&
+      !original.url?.includes("/auth/login")
+    ) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          refreshQueue.push((token) => {
+            if (!token) return reject(err);
+            original._retry = true;
+            if (original.headers) original.headers.Authorization = `Bearer ${token}`;
+            resolve(api(original));
+          });
+        });
+      }
+      original._retry = true;
+      isRefreshing = true;
+      try {
+        const res = await api.post<{ data: { token: string } }>("/auth/refresh");
+        const newToken = res.data.data.token;
+        setToken(newToken);
+        drainQueue(newToken);
+        if (original.headers) original.headers.Authorization = `Bearer ${newToken}`;
+        return api(original);
+      } catch {
+        drainQueue(null);
+        setToken(null);
+        if (typeof window !== "undefined" &&
+            !window.location.pathname.startsWith("/login") &&
+            !window.location.pathname.startsWith("/register")) {
+          window.location.href = "/login";
+        }
+        return Promise.reject(err);
+      } finally {
+        isRefreshing = false;
       }
     }
     return Promise.reject(err);

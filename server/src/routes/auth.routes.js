@@ -15,6 +15,7 @@ const router = express.Router();
 router.post("/register", authLimiter, validate({ body: registerSchema }), ctrl.register);
 router.post("/login", loginLimiter, validate({ body: loginSchema }), ctrl.login);
 router.get("/me", requireAuth, ctrl.me);
+router.post("/refresh", ctrl.refresh);
 router.post("/logout", ctrl.logout);
 router.patch(
   "/profile",

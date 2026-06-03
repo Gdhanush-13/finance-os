@@ -2,8 +2,14 @@ const jwt = require("jsonwebtoken");
 const env = require("../config/env");
 
 function generateToken(userId) {
-  return jwt.sign({ sub: String(userId) }, env.JWT_SECRET, {
-    expiresIn: env.JWT_EXPIRES_IN,
+  return jwt.sign({ sub: String(userId), type: "access" }, env.JWT_SECRET, {
+    expiresIn: env.accessTokenExpiresIn,
+  });
+}
+
+function generateRefreshToken(userId) {
+  return jwt.sign({ sub: String(userId), type: "refresh" }, env.refreshTokenSecret, {
+    expiresIn: env.refreshTokenExpiresIn,
   });
 }
 
@@ -11,4 +17,8 @@ function verifyToken(token) {
   return jwt.verify(token, env.JWT_SECRET);
 }
 
-module.exports = { generateToken, verifyToken };
+function verifyRefreshToken(token) {
+  return jwt.verify(token, env.refreshTokenSecret);
+}
+
+module.exports = { generateToken, generateRefreshToken, verifyToken, verifyRefreshToken };

@@ -39,7 +39,18 @@ export function useDeleteAccount() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => (await api.delete(`/accounts/${id}`)).data,
-    onSuccess: () => {
+    onMutate: async (id: string) => {
+      await qc.cancelQueries({ queryKey: accountKeys.all });
+      const snapshot = qc.getQueryData<Account[]>(accountKeys.all);
+      qc.setQueryData<Account[]>(accountKeys.all, (old) =>
+        old ? old.filter((a) => a._id !== id) : old
+      );
+      return { snapshot };
+    },
+    onError: (_err, _id, ctx) => {
+      if (ctx?.snapshot) qc.setQueryData(accountKeys.all, ctx.snapshot);
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: accountKeys.all });
       qc.invalidateQueries({ queryKey: ["analytics"] });
     },
