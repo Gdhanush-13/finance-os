@@ -95,15 +95,22 @@ export function apiError(err: unknown, fallback = "Something went wrong"): strin
   const data = e?.response?.data;
 
   if (data?.error?.details?.length) {
-    return data.error.details
-      .map((d) => `${d.path}: ${d.message}`)
-      .join(", ");
+    return data.error.details.map((d) => d.message).join(". ");
   }
 
-  return (
-    data?.error?.message ||
-    data?.message ||
-    e?.message ||
-    fallback
-  );
+  if (data?.error?.message) return data.error.message;
+  if (data?.message) return data.message;
+
+  const status = e?.response?.status;
+  if (status === 400) return "Invalid request. Please check your input.";
+  if (status === 401) return "Incorrect email or password.";
+  if (status === 403) return "You don't have permission to do that.";
+  if (status === 404) return "Not found.";
+  if (status === 409) return "This already exists.";
+  if (status === 422) return "Validation error. Please check your input.";
+  if (status === 429) return "Too many attempts. Please wait and try again.";
+  if (status && status >= 500) return "Server error. Please try again later.";
+  if (!e?.response) return "Network error. Please check your connection and try again.";
+
+  return fallback;
 }
