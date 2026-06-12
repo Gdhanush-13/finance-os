@@ -25,7 +25,7 @@ import { useCategories } from "@/hooks/useCategories";
 import type { RecurringRule } from "@/types";
 
 const schema = z.object({
-  name: z.string().min(1),
+  name: z.string().min(1, "Name is required"),
   amount: z.coerce.number().positive(),
   type: z.enum(["income", "expense", "transfer"]),
   frequency: z.enum(["daily", "weekly", "monthly", "yearly"]),
@@ -118,7 +118,7 @@ export default function RecurringPage() {
                 subtitle={`${r.frequency} · every ${r.interval > 1 ? `${r.interval} ` : ""}${r.frequency.replace(/ly$/, "")}`}
                 action={
                   <div className="flex gap-1">
-                    <Badge variant={(r.isActive ?? r.active) ? "default" : "secondary"} className="text-[10px]">{(r.isActive ?? r.active) ? "Active" : "Paused"}</Badge>
+                    <Badge variant={r.isActive ? "default" : "secondary"} className="text-[10px]">{r.isActive ? "Active" : "Paused"}</Badge>
                     <AppButton size="icon" variant="ghost" onClick={() => openEdit(r)}><Pencil className="h-3.5 w-3.5" /></AppButton>
                     <AppButton size="icon" variant="ghost" onClick={() => setDeleteId(r._id)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></AppButton>
                   </div>
@@ -131,7 +131,7 @@ export default function RecurringPage() {
                 <p className="mt-1 text-xs text-muted-foreground">
                   {r.account?.name}{r.toAccount ? ` → ${r.toAccount.name}` : ""}{r.category ? ` · ${r.category.name}` : ""}
                 </p>
-                <p className="text-xs text-muted-foreground">Next run: {formatDate(r.nextRunAt || r.nextRunDate)}</p>
+                <p className="text-xs text-muted-foreground">Next run: {formatDate(r.nextRunDate)}</p>
               </CardBody>
             </Card>
           ))}

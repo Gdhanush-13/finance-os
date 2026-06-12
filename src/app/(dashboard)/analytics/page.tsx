@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import { Card, CardHeader, CardBody } from "@/components/shared/AppCard";
+import ErrorState from "@/components/shared/ErrorState";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { formatCurrency } from "@/lib/format";
+import { apiError } from "@/lib/api";
 import type { CategoryBreakdown } from "@/types";
 import { CalendarDays, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 
@@ -13,8 +15,12 @@ const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"
 export default function AnalyticsPage() {
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
-  
-  const { summary, cashflow, categoryBreakdown, isLoading } = useAnalytics({ month, year });
+
+  const from = new Date(year, month - 1, 1).toISOString();
+  const to = new Date(year, month, 0, 23, 59, 59).toISOString();
+  const { summary, cashflow, categoryBreakdown, isLoading, error } = useAnalytics({ from, to });
+
+  if (error) return <ErrorState message={apiError(error)} onRetry={() => window.location.reload()} />;
 
   if (isLoading) {
     return (

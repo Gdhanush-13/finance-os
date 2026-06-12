@@ -24,7 +24,7 @@ import type { Goal } from "@/types";
 
 const goalSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  targetAmount: z.coerce.number().positive(),
+  targetAmount: z.coerce.number().positive("Target amount must be positive"),
   currency: z.string().min(3).max(3).default("USD"),
   deadline: z.string().optional(),
   note: z.string().optional(),

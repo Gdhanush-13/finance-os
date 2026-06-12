@@ -131,7 +131,7 @@ export default function AccountsPage() {
         onClose={() => setDeleteId(null)}
         onConfirm={onDelete}
         title="Delete account?"
-        description="This will permanently remove this account and all associated transactions."
+        description="If this account has no transactions it will be deleted. Otherwise, archive it from the edit form."
         loading={deleteAcct.isPending}
       />
 
