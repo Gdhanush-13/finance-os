@@ -29,9 +29,10 @@ async function proxy(req: NextRequest) {
       body,
     });
 
+    const skipHeaders = new Set(["transfer-encoding", "content-encoding", "content-length"]);
     const responseHeaders = new Headers();
     response.headers.forEach((value, key) => {
-      if (key.toLowerCase() !== "transfer-encoding") {
+      if (!skipHeaders.has(key.toLowerCase())) {
         responseHeaders.set(key, value);
       }
     });
