@@ -138,3 +138,13 @@
   .bg-income-soft { background-color: hsl(var(--success-muted)); }
   .bg-expense-soft { background-color: hsl(var(--expense) / 0.1); }
 }
+
+/* Hide native browser password reveal button (Edge/IE/Chrome) */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+input::-webkit-credentials-auto-fill-button {
+  visibility: hidden;
+  pointer-events: none;
+}
