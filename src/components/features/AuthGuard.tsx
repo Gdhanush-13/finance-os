@@ -15,22 +15,19 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     }
   }, [loading, user, router]);
 
-  if (loading) return <LoadingScreen />;
-  if (!user) return null;
+  if (loading || !user) return <LoadingScreen />;
   return <>{children}</>;
 }
 
 export function PublicOnlyRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
-  const router = useRouter();
 
   useEffect(() => {
     if (!loading && user) {
-      router.replace("/");
+      window.location.href = "/";
     }
-  }, [loading, user, router]);
+  }, [loading, user]);
 
-  if (loading) return <LoadingScreen />;
-  if (user) return null;
+  if (loading || user) return <LoadingScreen />;
   return <>{children}</>;
 }
