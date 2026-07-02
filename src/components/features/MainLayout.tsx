@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, type ReactNode } from "react";
+import { useState, useCallback, useEffect, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -58,6 +58,11 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [openMobile, setOpenMobile] = useState(false);
   const { dark, toggleTheme } = useTheme();
+
+  useEffect(() => {
+    document.body.style.overflow = openMobile ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [openMobile]);
 
   const prefetch = useCallback(
     (href: string) => router.prefetch(href),
@@ -208,7 +213,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 px-4 py-6 pb-safe-bottom lg:px-8 lg:py-8">
+        <main className={cn("flex-1 px-4 py-6 lg:px-8 lg:py-8", pathname !== "/transactions" ? "pb-28 lg:pb-8" : "pb-6 lg:pb-8")}>
           <div className="mx-auto w-full max-w-7xl animate-in fade-in duration-200">{children}</div>
         </main>
       </div>
