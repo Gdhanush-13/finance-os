@@ -88,7 +88,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
         {/* Centered form */}
         <div className="flex flex-1 items-center justify-center px-6 pb-10 lg:px-10">
-          <div className="w-full max-w-[420px]">
+          <div className="w-full max-w-[420px] pb-safe-bottom">
             {/* Mobile logo */}
             <div className="mb-8 flex items-center gap-2.5 lg:hidden">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
@@ -100,6 +100,11 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             </div>
 
             {children}
+
+            {/* Mobile copyright */}
+            <p className="mt-8 text-center text-xs text-muted-foreground lg:hidden">
+              &copy; {APP_CONFIG.year} {APP_CONFIG.company}
+            </p>
           </div>
         </div>
       </main>

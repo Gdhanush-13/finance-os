@@ -206,7 +206,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 px-4 py-6 lg:px-8 lg:py-8">
+        <main className="flex-1 px-4 py-6 pb-safe-bottom lg:px-8 lg:py-8">
           <div className="mx-auto w-full max-w-7xl animate-in fade-in duration-200">{children}</div>
         </main>
       </div>

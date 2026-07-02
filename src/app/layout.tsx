@@ -20,9 +20,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var d=document.documentElement,s=localStorage.getItem("finance-os.theme");if(s==="dark"||(s==null&&matchMedia("(prefers-color-scheme:dark)").matches))d.classList.add("dark")}catch(e){}})()`,
+            __html: `(function(){try{var d=document.documentElement,s=localStorage.getItem("finance-os.theme");if(s==="dark")d.classList.add("dark");else if(s==="light")d.classList.remove("dark");else d.classList.remove("dark")}catch(e){}})()`,
           }}
         />
       </head>
