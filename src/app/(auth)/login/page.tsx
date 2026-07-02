@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,7 +20,6 @@ type FormValues = z.infer<typeof schema>;
 
 export default function LoginPage() {
   const { login } = useAuth();
-  const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
 
   const {
@@ -34,7 +32,7 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       await login(values.email, values.password);
-      router.replace("/");
+      window.location.href = "/";
     } catch (err) {
       toast.error(apiError(err, "Login failed"));
     } finally {
