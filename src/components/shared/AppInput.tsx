@@ -30,7 +30,7 @@ const AppInput = forwardRef<HTMLInputElement, AppInputProps>(function AppInput(
           type={resolvedType}
           className={cn(
             "h-9 bg-card",
-            isPassword && "pr-9",
+            isPassword && "pr-10",
             error && "border-destructive focus-visible:ring-destructive/30",
             className
           )}
@@ -41,7 +41,7 @@ const AppInput = forwardRef<HTMLInputElement, AppInputProps>(function AppInput(
             type="button"
             tabIndex={-1}
             onClick={() => setShowPassword((v) => !v)}
-            className="absolute inset-y-0 right-0 flex items-center px-2.5 text-muted-foreground hover:text-foreground"
+            className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center text-muted-foreground hover:text-foreground"
             aria-label={showPassword ? "Hide password" : "Show password"}
           >
             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

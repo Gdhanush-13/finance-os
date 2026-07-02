@@ -19,6 +19,7 @@ import {
   Sun,
   Moon,
   BarChart2,
+  BookOpen,
 } from "lucide-react";
 import { useAuth } from "@/auth/AuthContext";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,7 @@ const navItems: NavItem[] = [
   { to: "/analytics", label: "Analytics", icon: BarChart2 },
   { to: "/categories", label: "Categories", icon: Tags },
   { to: "/import-export", label: "Import / Export", icon: Upload },
+  { to: "/docs", label: "Docs", icon: BookOpen },
 ];
 
 function isActive(pathname: string, to: string, end?: boolean) {
