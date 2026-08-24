@@ -3,6 +3,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const compression = require("compression");
 const morgan = require("morgan");
+const mongoose = require("mongoose");
 function sanitizeBody(req, _res, next) {
   if (req.body && typeof req.body === "object") {
     const clean = JSON.parse(JSON.stringify(req.body, (_, v) =>
@@ -59,7 +60,15 @@ function buildApp() {
   });
 
   app.get("/health", (_req, res) => {
-    res.json({ success: true, data: { status: "ok", uptime: process.uptime() } });
+    const databaseConnected = mongoose.connection.readyState === 1;
+    res.status(databaseConnected ? 200 : 503).json({
+      success: databaseConnected,
+      data: {
+        status: databaseConnected ? "ok" : "degraded",
+        database: databaseConnected ? "connected" : "disconnected",
+        uptime: process.uptime(),
+      },
+    });
   });
 
   app.use("/api", apiLimiter, routes);

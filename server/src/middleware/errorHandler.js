@@ -26,6 +26,13 @@ function errorHandler(err, req, res, _next) {
     status = 409;
     const field = Object.keys(err.keyValue || {})[0] || "field";
     message = `Duplicate value for ${field}`;
+  } else if (
+    err.name === "MongoServerSelectionError" ||
+    err.name === "MongoNetworkError" ||
+    /buffering timed out|before initial connection is complete/i.test(message)
+  ) {
+    status = 503;
+    message = "Database temporarily unavailable";
   }
 
   if (status >= 500) {

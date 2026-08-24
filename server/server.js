@@ -11,7 +11,8 @@ async function start() {
     logger.info("MongoDB connected successfully");
     if (!env.isTest) startCronJobs();
   } catch (err) {
-    logger.warn("MongoDB connection failed – server will start without DB", err.message);
+    logger.error("MongoDB connection failed; refusing to start an unusable API", err);
+    process.exit(1);
   }
 
   try {

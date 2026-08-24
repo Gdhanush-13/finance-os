@@ -3,6 +3,9 @@ const env = require("./env");
 const logger = require("../utils/logger");
 
 mongoose.set("strictQuery", true);
+// Never queue requests against a disconnected database. A queued auth query
+// used to hang for 10 seconds and then surface as an internal server error.
+mongoose.set("bufferCommands", false);
 
 async function connectDB(uri = env.MONGO_URI) {
   try {

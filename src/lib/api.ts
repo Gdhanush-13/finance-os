@@ -109,6 +109,7 @@ export function apiError(err: unknown, fallback = "Something went wrong"): strin
   if (status === 409) return "This already exists.";
   if (status === 422) return "Validation error. Please check your input.";
   if (status === 429) return "Too many attempts. Please wait and try again.";
+  if (status === 503) return "Finance service is temporarily unavailable. Please try again shortly.";
   if (status && status >= 500) return "Server error. Please try again later.";
   if (!e?.response) return "Network error. Please check your connection and try again.";
 

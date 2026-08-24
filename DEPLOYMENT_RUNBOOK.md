@@ -53,3 +53,16 @@
 ## Important Note on Secrets
 - Never commit your `MONGO_URI` or `JWT_SECRET` to Git. 
 - Share secrets only as local `.env` values with developers securely.
+
+## Login returns 503 / database unavailable
+
+The API now refuses to start when MongoDB is unavailable instead of accepting
+requests that must fail. If Render cannot start or `/health` reports
+`database: disconnected`:
+
+1. Confirm Render's `MONGO_URI` matches the working Atlas connection string.
+2. In MongoDB Atlas Network Access, allow the Render service's outbound network
+   (or temporarily `0.0.0.0/0` while diagnosing, then restrict it).
+3. Confirm the Atlas database user still exists and its password has not changed.
+4. Redeploy/restart the Render service and verify its public `/health` endpoint
+   returns HTTP 200 with `database: connected` before testing login.
