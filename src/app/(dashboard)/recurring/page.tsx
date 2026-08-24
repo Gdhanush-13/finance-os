@@ -55,6 +55,11 @@ export default function RecurringPage() {
 
   const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<FormValues>({ resolver: zodResolver(schema) });
   const watchType = watch("type");
+  const watchAccount = watch("account");
+  const selectedAccountCurrency = (accounts.data || []).find((account) => account._id === watchAccount)?.currency
+    || editing?.account?.currency
+    || editing?.currency
+    || "USD";
 
   const openAdd = () => {
     setEditing(null);
@@ -134,6 +139,7 @@ export default function RecurringPage() {
                 <p className="mt-1 text-xs text-muted-foreground">
                   {r.account?.name}{r.toAccount ? ` → ${r.toAccount.name}` : ""}{r.category ? ` · ${r.category.name}` : ""}
                 </p>
+                <p className="text-xs text-muted-foreground">Currency: {r.account?.currency || r.currency || "USD"}</p>
                 <p className="text-xs text-muted-foreground">Next run: {formatDate(r.nextRunDate)}</p>
               </CardBody>
             </Card>
@@ -169,6 +175,7 @@ export default function RecurringPage() {
             <option value="">Select account</option>
             {(accounts.data || []).map((a) => (<option key={a._id} value={a._id}>{a.name}</option>))}
           </AppSelect>
+          <AppInput label="Currency (from account)" value={selectedAccountCurrency} readOnly />
           {watchType === "transfer" && (
             <AppSelect label="To Account" {...register("toAccount")}>
               <option value="">Select account</option>

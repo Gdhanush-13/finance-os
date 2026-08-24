@@ -54,6 +54,7 @@ export interface Budget {
   _id: string;
   name: string;
   amount: number;
+  currency: string;
   period: "weekly" | "monthly" | "yearly";
   startDate: string;
   alertThreshold?: number;
@@ -82,7 +83,7 @@ export interface RecurringRule {
   _id: string;
   name: string;
   amount: number;
-  currency?: string;
+  currency: string;
   type: "income" | "expense" | "transfer";
   frequency: "daily" | "weekly" | "monthly" | "yearly";
   interval: number;

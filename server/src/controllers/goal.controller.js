@@ -11,7 +11,11 @@ exports.list = asyncHandler(async (req, res) => {
 });
 
 exports.create = asyncHandler(async (req, res) => {
-  const goal = await Goal.create({ ...req.body, user: req.user._id });
+  const goal = await Goal.create({
+    ...req.body,
+    currency: req.body.currency || req.user.currency || "USD",
+    user: req.user._id,
+  });
   res.status(201).json({ success: true, data: goal });
 });
 

@@ -20,12 +20,13 @@ import { apiError } from "@/lib/api";
 import { cleanPayload } from "@/lib/cleanPayload";
 import { useAccounts, useCreateAccount, useUpdateAccount, useDeleteAccount } from "@/hooks/useAccounts";
 import type { Account } from "@/types";
+import { useAuth } from "@/auth/AuthContext";
 
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
   type: z.string().min(1, "Type is required"),
   openingBalance: z.coerce.number(),
-  currency: z.string().min(3).max(3).default("USD"),
+  currency: z.string().min(3).max(3),
   institution: z.string().optional(),
 });
 
@@ -33,6 +34,7 @@ type FormValues = z.infer<typeof schema>;
 
 export default function AccountsPage() {
   const accounts = useAccounts();
+  const { user } = useAuth();
   const createAcct = useCreateAccount();
   const updateAcct = useUpdateAccount();
   const deleteAcct = useDeleteAccount();
@@ -47,7 +49,7 @@ export default function AccountsPage() {
 
   const openAdd = () => {
     setEditing(null);
-    reset({ name: "", type: "bank", openingBalance: 0, currency: "USD", institution: "" });
+    reset({ name: "", type: "bank", openingBalance: 0, currency: user?.currency || "USD", institution: "" });
     setModalOpen(true);
   };
 

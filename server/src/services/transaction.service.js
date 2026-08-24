@@ -26,12 +26,15 @@ async function createTransaction(userId, payload) {
     }
   }
   
-  // Get account to copy currency if not provided
-  let currency = payload.currency;
-  if (!currency) {
-    const account = await Account.findOne({ _id: payload.account, user: userId });
-    if (!account) throw ApiError.badRequest("Account not found");
-    currency = account.currency || "USD";
+  const account = await Account.findOne({ _id: payload.account, user: userId });
+  if (!account) throw ApiError.badRequest("Account not found");
+  const currency = account.currency || payload.currency || "USD";
+  if (payload.type === "transfer") {
+    const toAccount = await Account.findOne({ _id: payload.toAccount, user: userId });
+    if (!toAccount) throw ApiError.badRequest("Destination account not found");
+    if (toAccount.currency !== currency) {
+      throw ApiError.badRequest("Transfers require accounts with the same currency");
+    }
   }
   
   const tx = await Transaction.create({ ...payload, currency, user: userId });
@@ -65,15 +68,28 @@ async function deleteTransaction(userId, id) {
 async function updateTransaction(userId, id, payload) {
   const existing = await Transaction.findOne({ _id: id, user: userId, deletedAt: null });
   if (!existing) throw ApiError.notFound("Transaction not found");
-  await reverseTransactionEffects(userId, existing);
+  const nextType = payload.type || existing.type;
+  const nextAccount = payload.account || existing.account;
+  const nextToAccount = payload.toAccount !== undefined ? payload.toAccount : existing.toAccount;
+  const account = await Account.findOne({ _id: nextAccount, user: userId });
+  if (!account) throw ApiError.badRequest("Account not found");
+  const nextCurrency = account.currency || payload.currency || existing.currency || "USD";
 
-  Object.assign(existing, payload);
-
-  if (existing.type === "transfer") {
-    if (!existing.toAccount || String(existing.toAccount) === String(existing.account)) {
+  if (nextType === "transfer") {
+    if (!nextToAccount || String(nextToAccount) === String(nextAccount)) {
       throw ApiError.badRequest("Transfer requires distinct toAccount");
     }
-  } else {
+    const toAccount = await Account.findOne({ _id: nextToAccount, user: userId });
+    if (!toAccount) throw ApiError.badRequest("Destination account not found");
+    if (toAccount.currency !== nextCurrency) {
+      throw ApiError.badRequest("Transfers require accounts with the same currency");
+    }
+  }
+
+  await reverseTransactionEffects(userId, existing);
+  Object.assign(existing, payload, { currency: nextCurrency });
+
+  if (nextType !== "transfer") {
     existing.toAccount = null;
   }
 

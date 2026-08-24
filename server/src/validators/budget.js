@@ -6,6 +6,7 @@ const createBudgetSchema = z.object({
   name: z.string().trim().min(1).max(80),
   category: objectId.optional().nullable(),
   amount: z.coerce.number().positive(),
+  currency: z.string().trim().toUpperCase().length(3).optional(),
   period: z.enum(BUDGET_PERIODS).default("monthly"),
   startDate: z.coerce.date(),
   endDate: z.coerce.date().optional().nullable(),

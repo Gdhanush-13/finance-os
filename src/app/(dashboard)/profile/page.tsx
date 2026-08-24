@@ -13,7 +13,7 @@ import { cleanPayload } from "@/lib/cleanPayload";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Name is too short"),
-  currency: z.string().min(3).max(3).default("USD"),
+  currency: z.string().min(3).max(3),
   timezone: z.string().optional(),
   avatarUrl: z.string().url("Enter a valid URL").or(z.literal("")).optional(),
 });

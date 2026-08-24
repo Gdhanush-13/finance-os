@@ -2,6 +2,7 @@ const ApiError = require("../utils/ApiError");
 const asyncHandler = require("../utils/asyncHandler");
 const Transaction = require("../models/Transaction");
 const txService = require("../services/transaction.service");
+const Account = require("../models/Account");
 
 exports.list = asyncHandler(async (req, res) => {
   const { page, limit, type, account, category, from, to, search, sort } =
@@ -94,6 +95,14 @@ exports.transfer = asyncHandler(async (req, res) => {
   
   try {
     const { account, toAccount, amount, currency, description, notes, date } = req.body;
+    const sourceAccount = await Account.findOne({ _id: account, user: req.user._id }).session(session);
+    if (!sourceAccount) throw ApiError.badRequest("Account not found");
+    const destinationAccount = await Account.findOne({ _id: toAccount, user: req.user._id }).session(session);
+    if (!destinationAccount) throw ApiError.badRequest("Destination account not found");
+    const transactionCurrency = sourceAccount.currency || currency || req.user.currency || "USD";
+    if (destinationAccount.currency !== transactionCurrency) {
+      throw ApiError.badRequest("Transfers require accounts with the same currency");
+    }
     
     // Create debit transaction (money out of source account)
     const debitTx = await Transaction.create([{
@@ -102,7 +111,7 @@ exports.transfer = asyncHandler(async (req, res) => {
       toAccount,
       type: "transfer",
       amount,
-      currency: currency || "USD",
+      currency: transactionCurrency,
       description: description || "Transfer",
       notes: notes || "",
       date,
@@ -115,7 +124,7 @@ exports.transfer = asyncHandler(async (req, res) => {
       toAccount: account,
       type: "transfer",
       amount,
-      currency: currency || "USD",
+      currency: transactionCurrency,
       description: description || "Transfer",
       notes: notes || "",
       date,

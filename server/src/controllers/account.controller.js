@@ -14,6 +14,7 @@ exports.list = asyncHandler(async (req, res) => {
 exports.create = asyncHandler(async (req, res) => {
   const account = await Account.create({
     ...req.body,
+    currency: req.body.currency || req.user.currency || "USD",
     user: req.user._id,
     currentBalance: req.body.openingBalance ?? 0,
   });

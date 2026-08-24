@@ -28,6 +28,7 @@ import type { Budget } from "@/types";
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
   amount: z.coerce.number().positive("Amount must be positive"),
+  currency: z.string().min(3).max(3),
   period: z.enum(["weekly", "monthly", "yearly"]),
   category: z.string().optional(),
   alertThreshold: z.coerce.number().min(0).max(100).optional(),
@@ -52,13 +53,13 @@ export default function BudgetsPage() {
 
   const openAdd = () => {
     setEditing(null);
-    reset({ name: "", amount: 0, period: "monthly", category: "", alertThreshold: 80 });
+    reset({ name: "", amount: 0, currency: displayCurrency, period: "monthly", category: "", alertThreshold: 80 });
     setModalOpen(true);
   };
 
   const openEdit = (b: Budget) => {
     setEditing(b);
-    reset({ name: b.name, amount: b.amount, period: b.period, category: b.category?._id || "", alertThreshold: b.alertThreshold != null ? Math.round(b.alertThreshold * 100) : 80 });
+    reset({ name: b.name, amount: b.amount, currency: b.currency || displayCurrency, period: b.period, category: b.category?._id || "", alertThreshold: b.alertThreshold != null ? Math.round(b.alertThreshold * 100) : 80 });
     setModalOpen(true);
   };
 
@@ -127,12 +128,12 @@ export default function BudgetsPage() {
                 />
                 <CardBody>
                   <div className="flex items-end justify-between">
-                    <span className="text-lg font-semibold text-foreground">{formatCurrency(b.spent ?? 0, displayCurrency)}</span>
-                    <span className="text-xs text-muted-foreground">of {formatCurrency(b.amount, displayCurrency)}</span>
+                    <span className="text-lg font-semibold text-foreground">{formatCurrency(b.spent ?? 0, b.currency || displayCurrency)}</span>
+                    <span className="text-xs text-muted-foreground">of {formatCurrency(b.amount, b.currency || displayCurrency)}</span>
                   </div>
                   <Progress value={Math.min(pct, 100)} className="mt-2 h-2" />
                   <p className={`mt-1 text-xs ${pct >= 100 ? "text-destructive" : pct >= threshold ? "text-warning" : "text-muted-foreground"}`}>
-                    {pct.toFixed(0)}% used · {formatCurrency(b.remaining ?? 0, displayCurrency)} remaining
+                    {pct.toFixed(0)}% used · {formatCurrency(b.remaining ?? 0, b.currency || displayCurrency)} remaining
                   </p>
                 </CardBody>
               </Card>
@@ -154,6 +155,7 @@ export default function BudgetsPage() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <AppInput label="Name" error={errors.name?.message} {...register("name")} />
           <AppInput label="Amount" type="number" step="0.01" error={errors.amount?.message} {...register("amount")} />
+          <AppInput label="Currency" maxLength={3} error={errors.currency?.message} {...register("currency")} />
           <AppSelect label="Period" error={errors.period?.message} {...register("period")}>
             <option value="weekly">Weekly</option>
             <option value="monthly">Monthly</option>

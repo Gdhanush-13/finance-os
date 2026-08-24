@@ -21,11 +21,12 @@ import { apiError } from "@/lib/api";
 import { cleanPayload } from "@/lib/cleanPayload";
 import { useGoals, useCreateGoal, useUpdateGoal, useContributeGoal, useDeleteGoal } from "@/hooks/useGoals";
 import type { Goal } from "@/types";
+import { useAuth } from "@/auth/AuthContext";
 
 const goalSchema = z.object({
   name: z.string().min(1, "Name is required"),
   targetAmount: z.coerce.number().positive("Target amount must be positive"),
-  currency: z.string().min(3).max(3).default("USD"),
+  currency: z.string().min(3).max(3),
   deadline: z.string().optional(),
   note: z.string().optional(),
 });
@@ -34,6 +35,7 @@ type GoalValues = z.infer<typeof goalSchema>;
 
 export default function GoalsPage() {
   const goals = useGoals();
+  const { user } = useAuth();
   const createGoal = useCreateGoal();
   const updateGoal = useUpdateGoal();
   const contribute = useContributeGoal();
@@ -47,7 +49,7 @@ export default function GoalsPage() {
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<GoalValues>({ resolver: zodResolver(goalSchema) });
 
-  const openAdd = () => { setEditing(null); reset({ name: "", targetAmount: 0, currency: "USD", deadline: "", note: "" }); setModalOpen(true); };
+  const openAdd = () => { setEditing(null); reset({ name: "", targetAmount: 0, currency: user?.currency || "USD", deadline: "", note: "" }); setModalOpen(true); };
   const openEdit = (g: Goal) => { setEditing(g); reset({ name: g.name, targetAmount: g.targetAmount, currency: g.currency, deadline: g.deadline?.slice(0, 10) || "", note: g.note || "" }); setModalOpen(true); };
 
   const onSubmit = async (values: GoalValues) => {
