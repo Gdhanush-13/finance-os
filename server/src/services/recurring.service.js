@@ -30,7 +30,6 @@ async function processDueForUser(userId, asOf = new Date()) {
         category: r.category,
         type: r.type,
         amount: r.amount,
-        currency: r.currency,
         description: r.description,
         date: r.nextRunDate,
         recurring: r._id,

@@ -21,6 +21,8 @@ import { apiError } from "@/lib/api";
 import { cleanPayload } from "@/lib/cleanPayload";
 import { useBudgets, useCreateBudget, useUpdateBudget, useDeleteBudget } from "@/hooks/useBudgets";
 import { useCategories } from "@/hooks/useCategories";
+import { useAccounts } from "@/hooks/useAccounts";
+import { useAuth } from "@/auth/AuthContext";
 import type { Budget } from "@/types";
 
 const schema = z.object({
@@ -36,6 +38,8 @@ type FormValues = z.infer<typeof schema>;
 export default function BudgetsPage() {
   const budgets = useBudgets();
   const cats = useCategories("expense");
+  const accounts = useAccounts();
+  const { user } = useAuth();
   const createBudget = useCreateBudget();
   const updateBudget = useUpdateBudget();
   const deleteBudget = useDeleteBudget();
@@ -85,6 +89,12 @@ export default function BudgetsPage() {
   if (budgets.isLoading) return <GridPageSkeleton />;
   if (budgets.isError) return <ErrorState message={apiError(budgets.error)} onRetry={() => budgets.refetch()} />;
   const data = budgets.data || [];
+  const accountCurrencies = Array.from(
+    new Set((accounts.data || []).map((account) => account.currency).filter(Boolean))
+  );
+  const displayCurrency = accountCurrencies.length === 1
+    ? accountCurrencies[0]
+    : user?.currency || accountCurrencies[0] || "USD";
 
   return (
     <div className="space-y-6">
@@ -117,12 +127,12 @@ export default function BudgetsPage() {
                 />
                 <CardBody>
                   <div className="flex items-end justify-between">
-                    <span className="text-lg font-semibold text-foreground">{formatCurrency(b.spent ?? 0)}</span>
-                    <span className="text-xs text-muted-foreground">of {formatCurrency(b.amount)}</span>
+                    <span className="text-lg font-semibold text-foreground">{formatCurrency(b.spent ?? 0, displayCurrency)}</span>
+                    <span className="text-xs text-muted-foreground">of {formatCurrency(b.amount, displayCurrency)}</span>
                   </div>
                   <Progress value={Math.min(pct, 100)} className="mt-2 h-2" />
                   <p className={`mt-1 text-xs ${pct >= 100 ? "text-destructive" : pct >= threshold ? "text-warning" : "text-muted-foreground"}`}>
-                    {pct.toFixed(0)}% used · {formatCurrency(b.remaining ?? 0)} remaining
+                    {pct.toFixed(0)}% used · {formatCurrency(b.remaining ?? 0, displayCurrency)} remaining
                   </p>
                 </CardBody>
               </Card>

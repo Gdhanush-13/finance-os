@@ -16,6 +16,18 @@ export function formatCurrency(
   }
 }
 
+export function formatCurrencyBreakdown(
+  values: Array<{ currency: string; amount: number }> | null | undefined,
+  fallbackAmount = 0,
+  fallbackCurrency = "USD"
+): string {
+  if (!values?.length) return formatCurrency(fallbackAmount, fallbackCurrency);
+  return values
+    .filter((value) => Number.isFinite(value.amount))
+    .map((value) => formatCurrency(value.amount, value.currency))
+    .join(" · ");
+}
+
 export function formatDate(value?: string | Date | null, fmt = "MMM D, YYYY"): string {
   if (!value) return "—";
   return dayjs(value).format(fmt);

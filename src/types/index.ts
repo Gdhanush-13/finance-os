@@ -82,6 +82,7 @@ export interface RecurringRule {
   _id: string;
   name: string;
   amount: number;
+  currency?: string;
   type: "income" | "expense" | "transfer";
   frequency: "daily" | "weekly" | "monthly" | "yearly";
   interval: number;
@@ -108,6 +109,11 @@ export interface SummaryData {
   budgetCount?: number;
   goalCount?: number;
   goalsCompleted?: number;
+  currency: string;
+  hasMixedCurrencies?: boolean;
+  balancesByCurrency?: Array<{ currency: string; amount: number }>;
+  incomeByCurrency?: Array<{ currency: string; amount: number }>;
+  expenseByCurrency?: Array<{ currency: string; amount: number }>;
 }
 
 export interface CashflowPoint {

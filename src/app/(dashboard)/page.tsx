@@ -16,7 +16,7 @@ import {
 import { Card, CardHeader, CardBody } from "@/components/shared/AppCard";
 import { DashboardSkeleton, ListRowSkeleton } from "@/components/shared/PageSkeleton";
 import ErrorState from "@/components/shared/ErrorState";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatCurrencyBreakdown, formatDate } from "@/lib/format";
 import {
   useSummary,
   useCashflow,
@@ -49,21 +49,21 @@ export default function DashboardPage() {
   const stats = [
     {
       label: "Total Balance",
-      value: formatCurrency(s?.totalBalance),
+      value: formatCurrencyBreakdown(s?.balancesByCurrency, s?.totalBalance, s?.currency),
       icon: Wallet,
       color: "text-primary",
       bg: "bg-primary/10",
     },
     {
       label: "Income",
-      value: formatCurrency(s?.income),
+      value: formatCurrencyBreakdown(s?.incomeByCurrency, s?.income, s?.currency),
       icon: TrendingUp,
       color: "text-income",
       bg: "bg-income-soft",
     },
     {
       label: "Expenses",
-      value: formatCurrency(s?.expense),
+      value: formatCurrencyBreakdown(s?.expenseByCurrency, s?.expense, s?.currency),
       icon: TrendingDown,
       color: "text-expense",
       bg: "bg-expense-soft",
@@ -113,6 +113,7 @@ export default function DashboardPage() {
                   <XAxis dataKey="label" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
                   <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
                   <RTooltip
+                    formatter={(value: number) => s?.hasMixedCurrencies ? value.toLocaleString() : formatCurrency(value, s?.currency)}
                     contentStyle={{
                       borderRadius: 8,
                       border: "1px solid hsl(var(--border))",
@@ -153,6 +154,7 @@ export default function DashboardPage() {
                     ))}
                   </Pie>
                   <RTooltip
+                    formatter={(value: number) => s?.hasMixedCurrencies ? value.toLocaleString() : formatCurrency(value, s?.currency)}
                     contentStyle={{
                       borderRadius: 8,
                       border: "1px solid hsl(var(--border))",
@@ -205,7 +207,7 @@ export default function DashboardPage() {
                       }`}
                     >
                       {tx.type === "income" ? "+" : tx.type === "expense" ? "−" : ""}
-                      {formatCurrency(tx.amount)}
+                      {formatCurrency(tx.amount, tx.account?.currency || tx.currency || s?.currency)}
                     </p>
                     <Badge variant="secondary" className="mt-0.5 text-[10px]">
                       {tx.type}

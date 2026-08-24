@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatCurrencyBreakdown, formatDate } from "@/lib/format";
 
 describe("formatCurrency", () => {
   it("formats a positive number as USD", () => {
@@ -20,6 +20,19 @@ describe("formatCurrency", () => {
 
   it("formats zero correctly", () => {
     expect(formatCurrency(0)).toContain("0");
+  });
+});
+
+describe("formatCurrencyBreakdown", () => {
+  it("formats each currency separately", () => {
+    const result = formatCurrencyBreakdown([
+      { currency: "INR", amount: 1000 },
+      { currency: "USD", amount: 25 },
+    ]);
+
+    expect(result).toContain("1,000");
+    expect(result).toContain("25");
+    expect(result).toContain("·");
   });
 });
 

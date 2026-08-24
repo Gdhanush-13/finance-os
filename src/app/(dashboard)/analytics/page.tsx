@@ -5,10 +5,10 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Card, CardHeader, CardBody } from "@/components/shared/AppCard";
 import ErrorState from "@/components/shared/ErrorState";
 import { useAnalytics } from "@/hooks/useAnalytics";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, formatCurrencyBreakdown } from "@/lib/format";
 import { apiError } from "@/lib/api";
 import type { CategoryBreakdown } from "@/types";
-import { CalendarDays, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { CalendarDays, TrendingUp, TrendingDown, Wallet } from "lucide-react";
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16"];
 
@@ -78,10 +78,10 @@ export default function AnalyticsPage() {
               <div>
                 <p className="text-xs text-muted-foreground">Total Balance</p>
                 <p className="text-lg font-semibold text-foreground">
-                  {summary ? formatCurrency(summary.totalBalance) : "$0.00"}
+                  {summary ? formatCurrencyBreakdown(summary.balancesByCurrency, summary.totalBalance, summary.currency) : "—"}
                 </p>
               </div>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <Wallet className="h-4 w-4 text-muted-foreground" />
             </div>
           </CardBody>
         </Card>
@@ -91,7 +91,7 @@ export default function AnalyticsPage() {
               <div>
                 <p className="text-xs text-muted-foreground">Income</p>
                 <p className="text-lg font-semibold text-income">
-                  {summary ? formatCurrency(summary.income) : "$0.00"}
+                  {summary ? formatCurrencyBreakdown(summary.incomeByCurrency, summary.income, summary.currency) : "—"}
                 </p>
               </div>
               <TrendingUp className="h-4 w-4 text-income" />
@@ -104,7 +104,7 @@ export default function AnalyticsPage() {
               <div>
                 <p className="text-xs text-muted-foreground">Expenses</p>
                 <p className="text-lg font-semibold text-expense">
-                  {summary ? formatCurrency(summary.expense) : "$0.00"}
+                  {summary ? formatCurrencyBreakdown(summary.expenseByCurrency, summary.expense, summary.currency) : "—"}
                 </p>
               </div>
               <TrendingDown className="h-4 w-4 text-expense" />
@@ -175,7 +175,7 @@ export default function AnalyticsPage() {
                     ))}
                   </Pie>
                   <Tooltip 
-                    formatter={(value: number) => formatCurrency(value)}
+                    formatter={(value: number) => summary?.hasMixedCurrencies ? value.toLocaleString() : formatCurrency(value, summary?.currency)}
                     contentStyle={{ 
                       backgroundColor: "hsl(var(--card))", 
                       border: "1px solid hsl(var(--border))",
@@ -200,7 +200,7 @@ export default function AnalyticsPage() {
                 <XAxis dataKey="label" tick={{ fill: "hsl(var(--muted-foreground))" }} />
                 <YAxis tick={{ fill: "hsl(var(--muted-foreground))" }} />
                 <Tooltip 
-                  formatter={(value: number) => formatCurrency(value)}
+                  formatter={(value: number) => summary?.hasMixedCurrencies ? value.toLocaleString() : formatCurrency(value, summary?.currency)}
                   contentStyle={{ 
                     backgroundColor: "hsl(var(--card))", 
                     border: "1px solid hsl(var(--border))",

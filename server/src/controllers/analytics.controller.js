@@ -19,7 +19,27 @@ exports.summary = asyncHandler(async (req, res) => {
   const [byType, accounts, budgetCount, goals] = await Promise.all([
     Transaction.aggregate([
       { $match: { user: userId, date: { $gte: from, $lte: to }, deletedAt: null } },
-      { $group: { _id: "$type", total: { $sum: "$amount" }, count: { $sum: 1 } } },
+      {
+        $lookup: {
+          from: "accounts",
+          localField: "account",
+          foreignField: "_id",
+          as: "sourceAccount",
+        },
+      },
+      { $unwind: { path: "$sourceAccount", preserveNullAndEmptyArrays: true } },
+      {
+        $group: {
+          _id: {
+            type: "$type",
+            currency: {
+              $ifNull: ["$sourceAccount.currency", { $ifNull: ["$currency", req.user.currency || "USD"] }],
+            },
+          },
+          total: { $sum: "$amount" },
+          count: { $sum: 1 },
+        },
+      },
     ]),
     Account.find({ user: userId, isArchived: false }).select(
       "name currentBalance currency type color icon"
@@ -28,11 +48,25 @@ exports.summary = asyncHandler(async (req, res) => {
     Goal.find({ user: userId }).select("name targetAmount currentAmount isAchieved"),
   ]);
 
-  const map = Object.fromEntries(byType.map((t) => [t._id, t]));
-  const income = map.income?.total || 0;
-  const expense = map.expense?.total || 0;
-  const transferCount = map.transfer?.count || 0;
+  const rowsFor = (type) => byType.filter((row) => row._id.type === type);
+  const amountBreakdown = (type) =>
+    rowsFor(type).map((row) => ({ currency: row._id.currency, amount: row.total }));
+  const incomeRows = rowsFor("income");
+  const expenseRows = rowsFor("expense");
+  const income = incomeRows.reduce((sum, row) => sum + row.total, 0);
+  const expense = expenseRows.reduce((sum, row) => sum + row.total, 0);
+  const transferCount = rowsFor("transfer").reduce((sum, row) => sum + row.count, 0);
   const totalBalance = accounts.reduce((s, a) => s + a.currentBalance, 0);
+  const balanceMap = new Map();
+  for (const account of accounts) {
+    const currency = account.currency || req.user.currency || "USD";
+    balanceMap.set(currency, (balanceMap.get(currency) || 0) + account.currentBalance);
+  }
+  const balancesByCurrency = Array.from(balanceMap, ([currency, amount]) => ({ currency, amount }));
+  const accountCurrencies = [...balanceMap.keys()];
+  const currency = accountCurrencies.length === 1
+    ? accountCurrencies[0]
+    : req.user.currency || accountCurrencies[0] || "USD";
 
   res.json({
     success: true,
@@ -43,9 +77,16 @@ exports.summary = asyncHandler(async (req, res) => {
       net: income - expense,
       savingsRate: income > 0 ? (income - expense) / income : 0,
       transactionCount:
-        (map.income?.count || 0) + (map.expense?.count || 0) + transferCount,
+        incomeRows.reduce((sum, row) => sum + row.count, 0) +
+        expenseRows.reduce((sum, row) => sum + row.count, 0) +
+        transferCount,
       accountCount: accounts.length,
       totalBalance,
+      currency,
+      hasMixedCurrencies: accountCurrencies.length > 1,
+      balancesByCurrency,
+      incomeByCurrency: amountBreakdown("income"),
+      expenseByCurrency: amountBreakdown("expense"),
       budgetCount,
       goalCount: goals.length,
       goalsCompleted: goals.filter((g) => g.isAchieved).length,
@@ -139,7 +180,7 @@ exports.recent = asyncHandler(async (req, res) => {
   const items = await Transaction.find({ user: userId, deletedAt: null })
     .sort({ date: -1, createdAt: -1 })
     .limit(limit)
-    .populate("account", "name color icon")
+    .populate("account", "name color icon currency")
     .populate("category", "name kind color icon");
   res.json({ success: true, data: items });
 });

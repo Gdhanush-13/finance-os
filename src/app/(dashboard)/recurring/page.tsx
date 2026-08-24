@@ -126,7 +126,10 @@ export default function RecurringPage() {
               />
               <CardBody>
                 <p className={`text-lg font-semibold ${r.type === "income" ? "text-income" : r.type === "expense" ? "text-expense" : "text-foreground"}`}>
-                  {r.type === "income" ? "+" : r.type === "expense" ? "−" : ""}{formatCurrency(r.amount)}
+                  {r.type === "income" ? "+" : r.type === "expense" ? "−" : ""}{formatCurrency(
+                    r.amount,
+                    r.account?.currency || r.currency || "USD"
+                  )}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {r.account?.name}{r.toAccount ? ` → ${r.toAccount.name}` : ""}{r.category ? ` · ${r.category.name}` : ""}
