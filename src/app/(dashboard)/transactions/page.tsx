@@ -183,7 +183,10 @@ export default function TransactionsPage() {
                     <div className="flex shrink-0 items-center gap-1 sm:gap-3">
                       <div className="text-right">
                         <p className={`text-sm font-semibold ${tx.type === "income" ? "text-income" : tx.type === "expense" ? "text-expense" : "text-foreground"}`}>
-                          {tx.type === "income" ? "+" : tx.type === "expense" ? "−" : ""}{formatCurrency(tx.amount)}
+                          {tx.type === "income" ? "+" : tx.type === "expense" ? "−" : ""}{formatCurrency(
+                            tx.amount,
+                            tx.account?.currency || tx.currency || "USD"
+                          )}
                         </p>
                         <Badge variant="secondary" className="text-[10px]">{tx.type}</Badge>
                       </div>
